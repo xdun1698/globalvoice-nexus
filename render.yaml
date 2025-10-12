@@ -1,0 +1,47 @@
+# Render Blueprint for Auto-Deploy
+services:
+  # Backend API
+  - type: web
+    name: globalvoice-backend
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        value: redis://localhost:6379
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_NUMBER
+        sync: false
+      - key: FRONTEND_URL
+        value: https://globalvoice-nexus.netlify.app
+      - key: NLP_ENGINE_URL
+        value: https://globalvoice-nlp.onrender.com
+
+  # NLP Engine
+  - type: web
+    name: globalvoice-nlp
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: cd nlp-engine && pip install -r requirements-minimal.txt
+    startCommand: cd nlp-engine && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
