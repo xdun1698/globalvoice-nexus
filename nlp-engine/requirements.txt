@@ -1,0 +1,48 @@
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+pydantic==2.6.1
+python-dotenv==1.0.1
+
+# AI/ML Libraries
+openai==1.12.0
+anthropic==0.18.1
+langchain==0.1.7
+langchain-openai==0.0.5
+langchain-anthropic==0.1.1
+
+# NLP Libraries
+transformers==4.37.2
+torch>=2.0.0
+sentencepiece==0.1.99
+sacremoses==0.1.1
+langdetect==1.0.9
+pycld2==0.41
+
+# Translation
+googletrans==4.0.0rc1
+deep-translator==1.11.4
+
+# Vector Database
+pinecone-client==3.0.3
+chromadb==0.4.22
+
+# Speech Processing
+whisper==1.1.10
+pydub==0.25.1
+
+# Data Processing
+numpy==1.26.4
+pandas==2.2.0
+scikit-learn==1.4.0
+
+# Caching
+redis==5.0.1
+hiredis==2.3.2
+
+# HTTP Client
+httpx==0.26.0
+aiohttp==3.9.3
+
+# Utilities
+python-multipart==0.0.9
+pyyaml==6.0.1

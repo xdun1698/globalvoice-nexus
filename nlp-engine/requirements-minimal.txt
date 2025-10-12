@@ -1,0 +1,26 @@
+# Minimal requirements for quick start
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+pydantic==2.6.1
+python-dotenv==1.0.1
+
+# AI/ML Libraries
+openai>=1.0.0
+anthropic>=0.18.0
+
+# NLP Libraries (lightweight)
+langdetect==1.0.9
+pycld2==0.41
+
+# Translation
+deep-translator==1.11.4
+
+# Caching
+redis==5.0.1
+
+# HTTP Client
+httpx==0.26.0
+
+# Utilities
+python-multipart==0.0.9
+pyyaml==6.0.1
