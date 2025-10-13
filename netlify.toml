@@ -19,3 +19,5 @@
 [context.deploy-preview.environment]
   VITE_BACKEND_URL = "https://globalvoice-backend.onrender.com"
   VITE_WS_URL = "wss://globalvoice-backend.onrender.com"
+
+# Note: Update these URLs after deploying backend to Render
