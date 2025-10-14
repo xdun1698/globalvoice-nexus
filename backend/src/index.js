@@ -85,25 +85,30 @@ async function startServer() {
   try {
     // Initialize database
     await initializeDatabase();
-    logger.info('Database initialized');
+    logger.info('✅ Database initialized');
 
-    // Initialize Redis
-    await initializeRedis();
-    logger.info('Redis initialized');
+    // Initialize Redis (optional)
+    try {
+      await initializeRedis();
+      logger.info('✅ Redis initialized');
+    } catch (error) {
+      logger.warn('⚠️  Redis initialization failed - continuing without cache');
+    }
 
     // Initialize WebSocket
     initializeWebSocket(io);
-    logger.info('WebSocket initialized');
+    logger.info('✅ WebSocket initialized');
 
     // Start server
-    const PORT = process.env.BACKEND_PORT || 3001;
-    server.listen(PORT, () => {
+    const PORT = process.env.PORT || process.env.BACKEND_PORT || 3001;
+    server.listen(PORT, '0.0.0.0', () => {
       logger.info(`🚀 GlobalVoice Nexus Backend running on port ${PORT}`);
-      logger.info(`Environment: ${process.env.NODE_ENV}`);
-      logger.info(`Frontend URL: ${process.env.FRONTEND_URL}`);
+      logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+      logger.info(`Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+      logger.info(`Health check: http://localhost:${PORT}/health`);
     });
   } catch (error) {
-    logger.error('Failed to start server:', error);
+    logger.error('❌ Failed to start server:', error);
     process.exit(1);
   }
 }
