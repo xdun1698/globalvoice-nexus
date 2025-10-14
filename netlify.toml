@@ -13,11 +13,11 @@
   status = 200
 
 [context.production.environment]
-  VITE_BACKEND_URL = "https://globalvoice-backend.onrender.com"
-  VITE_WS_URL = "wss://globalvoice-backend.onrender.com"
+  VITE_BACKEND_URL = "https://globalvoice-backend.fly.dev"
+  VITE_WS_URL = "wss://globalvoice-backend.fly.dev"
 
 [context.deploy-preview.environment]
-  VITE_BACKEND_URL = "https://globalvoice-backend.onrender.com"
-  VITE_WS_URL = "wss://globalvoice-backend.onrender.com"
+  VITE_BACKEND_URL = "https://globalvoice-backend.fly.dev"
+  VITE_WS_URL = "wss://globalvoice-backend.fly.dev"
 
-# Note: Update these URLs after deploying backend to Render
+# Note: Backend deployed to Fly.io for world-class performance
