@@ -13,8 +13,6 @@ services:
         value: production
       - key: DATABASE_URL
         sync: false
-      - key: REDIS_URL
-        value: redis://localhost:6379
       - key: JWT_SECRET
         generateValue: true
       - key: ENCRYPTION_KEY
