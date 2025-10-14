@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { UserPlus, Mail, Lock, User } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
-import axios from 'axios';
+import api from '../../lib/axios';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ export default function Register() {
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      const response = await axios.post('/api/auth/register', {
+      const response = await api.post('/api/auth/register', {
         name: data.name,
         email: data.email,
         password: data.password
@@ -26,7 +26,8 @@ export default function Register() {
       toast.success('Account created successfully!');
       navigate('/');
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Registration failed');
+      console.error('Registration error:', error);
+      toast.error(error.response?.data?.error || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

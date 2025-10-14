@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { LogIn, Mail, Lock } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
-import axios from 'axios';
+import api from '../../lib/axios';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -15,12 +15,13 @@ export default function Login() {
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      const response = await axios.post('/api/auth/login', data);
+      const response = await api.post('/api/auth/login', data);
       login(response.data.user, response.data.token);
       toast.success('Welcome back!');
       navigate('/');
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Login failed');
+      console.error('Login error:', error);
+      toast.error(error.response?.data?.error || 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
