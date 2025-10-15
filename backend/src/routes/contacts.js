@@ -8,23 +8,9 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-// Use system temp directory for uploads in production
-const uploadDir = process.env.NODE_ENV === 'production' 
-  ? path.join(os.tmpdir(), 'uploads')
-  : 'uploads/';
-
-// Ensure upload directory exists
-try {
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-} catch (error) {
-  logger.warn('Could not create upload directory:', error.message);
-}
-
+// Use memory storage in production (no disk access needed)
 const upload = multer({ 
-  dest: uploadDir,
-  storage: multer.memoryStorage() // Use memory storage as fallback
+  storage: multer.memoryStorage()
 });
 
 // Get all contacts
