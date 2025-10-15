@@ -5,8 +5,27 @@ const logger = require('../utils/logger');
 const multer = require('multer');
 const csv = require('csv-parser');
 const fs = require('fs');
+const os = require('os');
+const path = require('path');
 
-const upload = multer({ dest: 'uploads/' });
+// Use system temp directory for uploads in production
+const uploadDir = process.env.NODE_ENV === 'production' 
+  ? path.join(os.tmpdir(), 'uploads')
+  : 'uploads/';
+
+// Ensure upload directory exists
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (error) {
+  logger.warn('Could not create upload directory:', error.message);
+}
+
+const upload = multer({ 
+  dest: uploadDir,
+  storage: multer.memoryStorage() // Use memory storage as fallback
+});
 
 // Get all contacts
 router.get('/', async (req, res) => {
