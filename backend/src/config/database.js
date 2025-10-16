@@ -33,9 +33,14 @@ async function initializeDatabase() {
     await db.raw('SELECT 1');
     logger.info('Database connection established');
     
+    // Run migrations automatically
+    logger.info('Running database migrations...');
+    await db.migrate.latest();
+    logger.info('Database migrations completed');
+    
     return db;
   } catch (error) {
-    logger.error('Database connection failed:', error);
+    logger.error('Database initialization failed:', error);
     throw error;
   }
 }
