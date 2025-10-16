@@ -72,31 +72,165 @@ class NLPService {
   }
 
   /**
-   * Process user input with NLP engine
+   * Process user input with NLP engine or OpenAI fallback
    */
-  async processInput({ text, language, agentId, callId, context }) {
+  async processInput({ text, language, agentId, callId, context, agent }) {
     try {
-      const response = await axios.post(`${this.nlpEngineUrl}/process`, {
-        text,
-        language,
-        agent_id: agentId,
-        call_id: callId,
-        context
+      // Try NLP engine first if available
+      if (this.nlpEngineUrl && this.nlpEngineUrl !== 'http://localhost:8001') {
+        try {
+          const response = await axios.post(`${this.nlpEngineUrl}/process`, {
+            text,
+            language,
+            agent_id: agentId,
+            call_id: callId,
+            context
+          }, { timeout: 3000 });
+
+          return {
+            response: response.data.response,
+            intent: response.data.intent,
+            entities: response.data.entities,
+            sentiment: response.data.sentiment,
+            confidence: response.data.confidence,
+            context: response.data.context,
+            shouldEndCall: response.data.should_end_call || false
+          };
+        } catch (nlpError) {
+          logger.warn('NLP engine unavailable, falling back to OpenAI');
+        }
+      }
+
+      // Fallback to OpenAI with agent personality
+      if (!this.openai) {
+        throw new Error('Neither NLP engine nor OpenAI is available');
+      }
+
+      // Build context-aware prompt with agent personality
+      const systemPrompt = this.buildAgentSystemPrompt(agent, language, context);
+      
+      const completion = await this.openai.chat.completions.create({
+        model: process.env.OPENAI_MODEL || 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: text }
+        ],
+        temperature: 0.7,
+        max_tokens: 150
       });
 
+      const aiResponse = completion.choices[0].message.content;
+
+      // Basic intent detection
+      const intent = this.detectBasicIntent(text);
+      const sentiment = this.detectBasicSentiment(text);
+
       return {
-        response: response.data.response,
-        intent: response.data.intent,
-        entities: response.data.entities,
-        sentiment: response.data.sentiment,
-        confidence: response.data.confidence,
-        context: response.data.context,
-        shouldEndCall: response.data.should_end_call || false
+        response: aiResponse,
+        intent,
+        entities: [],
+        sentiment,
+        confidence: 0.85,
+        context: { ...context, lastResponse: aiResponse },
+        shouldEndCall: intent === 'farewell'
       };
     } catch (error) {
       logger.error('NLP processing error:', error);
-      throw error;
+      // Return a fallback response instead of throwing
+      return {
+        response: agent?.greeting || "I'm here to help. Could you please repeat that?",
+        intent: 'unknown',
+        entities: [],
+        sentiment: 'neutral',
+        confidence: 0.5,
+        context,
+        shouldEndCall: false
+      };
     }
+  }
+
+  /**
+   * Build system prompt with agent personality and characteristics
+   */
+  buildAgentSystemPrompt(agent, language, context) {
+    if (!agent) {
+      return `You are a helpful AI assistant. Respond in ${language}. Keep responses concise for voice.`;
+    }
+
+    let prompt = `You are ${agent.name || 'an AI assistant'}.
+
+## Your Personality
+${agent.personality || 'You are professional, helpful, and friendly.'}
+
+## Your Role
+${agent.description || 'You assist customers with their inquiries.'}
+
+## Communication Style
+- Language: ${language}
+- Voice: ${agent.voice || 'professional'}
+- Keep responses concise (1-2 sentences) - this is a voice call
+- Be natural and conversational
+- Match the caller's tone
+
+## Greeting
+When greeting: "${agent.greeting || 'Hello! How can I help you today?'}"
+`;
+
+    // Add intents if available
+    if (agent.intents && agent.intents.length > 0) {
+      prompt += `\n## Known Intents\n`;
+      agent.intents.forEach(intent => {
+        prompt += `- ${intent.name}: ${intent.response}\n`;
+      });
+    }
+
+    // Add context if available
+    if (context && Object.keys(context).length > 0) {
+      prompt += `\n## Current Context\n${JSON.stringify(context, null, 2)}\n`;
+    }
+
+    prompt += `\nRespond naturally and helpfully based on your personality and role.`;
+
+    return prompt;
+  }
+
+  /**
+   * Detect basic intent from text
+   */
+  detectBasicIntent(text) {
+    const lowerText = text.toLowerCase();
+    
+    if (/\b(hello|hi|hey|good morning|good afternoon)\b/.test(lowerText)) {
+      return 'greeting';
+    }
+    if (/\b(bye|goodbye|see you|talk later|have a good)\b/.test(lowerText)) {
+      return 'farewell';
+    }
+    if (/\b(help|assist|support|problem|issue)\b/.test(lowerText)) {
+      return 'help_request';
+    }
+    if (/\b(thank|thanks|appreciate)\b/.test(lowerText)) {
+      return 'gratitude';
+    }
+    
+    return 'general_inquiry';
+  }
+
+  /**
+   * Detect basic sentiment from text
+   */
+  detectBasicSentiment(text) {
+    const lowerText = text.toLowerCase();
+    
+    const positiveWords = ['good', 'great', 'excellent', 'happy', 'love', 'perfect', 'wonderful'];
+    const negativeWords = ['bad', 'terrible', 'awful', 'hate', 'angry', 'frustrated', 'problem', 'issue'];
+    
+    const positiveCount = positiveWords.filter(word => lowerText.includes(word)).length;
+    const negativeCount = negativeWords.filter(word => lowerText.includes(word)).length;
+    
+    if (positiveCount > negativeCount) return 'positive';
+    if (negativeCount > positiveCount) return 'negative';
+    return 'neutral';
   }
 
   /**
