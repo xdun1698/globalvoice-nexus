@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
+import api from '../lib/axios';
 import {
   Save,
   Play,
@@ -75,19 +76,68 @@ export default function AgentBuilder() {
         workflows,
       };
 
-      // API call would go here
-      console.log('Saving agent:', agentData);
+      if (isEditing) {
+        await api.put(`/api/agents/${id}`, agentData);
+        toast.success('Agent updated successfully!');
+      } else {
+        const response = await api.post('/api/agents', agentData);
+        toast.success('Agent created successfully!');
+        
+        // Assign phone number if available
+        if (response.data.agent?.id) {
+          try {
+            await api.post(`/api/agents/${response.data.agent.id}/phone-number`, {
+              phoneNumber: '+18175417385'
+            });
+            toast.success('Phone number assigned!');
+          } catch (err) {
+            console.error('Failed to assign phone number:', err);
+          }
+        }
+      }
       
-      toast.success(isEditing ? 'Agent updated successfully!' : 'Agent created successfully!');
       navigate('/agents');
     } catch (error) {
-      toast.error('Failed to save agent');
+      console.error('Save error:', error);
+      toast.error(error.response?.data?.error || 'Failed to save agent');
     }
   };
 
-  const testAgent = () => {
-    toast.success('Test call initiated!');
+  const testAgent = async () => {
+    try {
+      toast.loading('Initiating test call...');
+      // This would make a test call to your phone
+      toast.success('Test call feature coming soon!');
+    } catch (error) {
+      toast.error('Failed to initiate test call');
+    }
   };
+
+  // Load agent data if editing
+  useEffect(() => {
+    if (isEditing) {
+      const loadAgent = async () => {
+        try {
+          const response = await api.get(`/api/agents/${id}`);
+          const agent = response.data.agent;
+          
+          // Set form values
+          Object.keys(agent).forEach(key => {
+            if (key !== 'intents' && key !== 'workflows') {
+              // setValue from react-hook-form would be used here
+            }
+          });
+          
+          if (agent.intents) setIntents(agent.intents);
+          if (agent.workflows) setWorkflows(agent.workflows);
+        } catch (error) {
+          toast.error('Failed to load agent');
+          navigate('/agents');
+        }
+      };
+      loadAgent();
+    }
+  }, [isEditing, id, navigate]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -184,9 +234,12 @@ export default function AgentBuilder() {
                 Voice Type
               </label>
               <select {...register('voice')} className="input">
-                <option value="female">Female</option>
-                <option value="male">Male</option>
-                <option value="neutral">Neutral</option>
+                <option value="Polly.Joanna">Joanna (US Female)</option>
+                <option value="Polly.Matthew">Matthew (US Male)</option>
+                <option value="Polly.Amy">Amy (UK Female)</option>
+                <option value="Polly.Brian">Brian (UK Male)</option>
+                <option value="Polly.Conchita">Conchita (Spanish Female)</option>
+                <option value="Polly.Celine">Celine (French Female)</option>
               </select>
             </div>
 
@@ -194,13 +247,13 @@ export default function AgentBuilder() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Personality
               </label>
-              <select {...register('personality')} className="input">
-                <option value="professional">Professional</option>
-                <option value="friendly">Friendly</option>
-                <option value="empathetic">Empathetic</option>
-                <option value="enthusiastic">Enthusiastic</option>
-                <option value="calm">Calm & Reassuring</option>
-              </select>
+              <textarea
+                {...register('personality')}
+                rows={3}
+                className="input"
+                placeholder="You are a professional and friendly customer support agent. Be helpful, empathetic, and concise. Ask clarifying questions when needed."
+              />
+              <p className="mt-1 text-sm text-gray-500">Describe how the agent should behave and respond</p>
             </div>
 
             <div className="md:col-span-2">

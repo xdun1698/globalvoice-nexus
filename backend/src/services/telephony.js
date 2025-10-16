@@ -6,10 +6,18 @@ const NLPService = require('./nlp');
 
 class TelephonyService {
   constructor() {
-    this.client = twilio(
-      process.env.TWILIO_ACCOUNT_SID,
-      process.env.TWILIO_AUTH_TOKEN
-    );
+    // Initialize Twilio client only if credentials are provided
+    if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+      this.client = twilio(
+        process.env.TWILIO_ACCOUNT_SID,
+        process.env.TWILIO_AUTH_TOKEN
+      );
+      logger.info('Twilio client initialized');
+    } else {
+      this.client = null;
+      logger.warn('Twilio credentials not provided - telephony features disabled');
+    }
+    
     this.voiceService = new VoiceService();
     this.nlpService = new NLPService();
   }
@@ -144,13 +152,14 @@ class TelephonyService {
       const call = await db('calls').where({ id: callId }).first();
       const agent = await db('agents').where({ id: call.agent_id }).first();
 
-      // Process with NLP engine
+      // Process with NLP engine (with agent data for OpenAI fallback)
       const nlpResponse = await this.nlpService.processInput({
         text: SpeechResult,
         language,
         agentId: agent.id,
         callId,
-        context: call.context || {}
+        context: call.context || {},
+        agent: agent // Pass full agent data for personality/fallback
       });
 
       // Update call context

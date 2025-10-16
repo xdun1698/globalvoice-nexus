@@ -1,4 +1,6 @@
+console.log('🚀 Starting GlobalVoice Nexus Backend...');
 require('dotenv').config();
+console.log('✅ Dotenv loaded');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -6,6 +8,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+console.log('✅ Dependencies loaded');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -34,6 +37,9 @@ const io = new Server(server, {
     methods: ['GET', 'POST']
   }
 });
+
+// Trust proxy for Fly.io
+app.set('trust proxy', true);
 
 // Middleware
 app.use(helmet({

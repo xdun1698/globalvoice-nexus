@@ -32,51 +32,11 @@ primary_region = "iad" # US East (Ashburn, VA)
     timeout = "5s"
     path = "/health"
 
-# Multi-region deployment for global low latency
-[[services]]
-  protocol = "tcp"
-  internal_port = 8080
-
-  [[services.ports]]
-    port = 80
-    handlers = ["http"]
-    force_https = true
-
-  [[services.ports]]
-    port = 443
-    handlers = ["tls", "http"]
-
-  [services.concurrency]
-    type = "connections"
-    hard_limit = 250
-    soft_limit = 200
-
-# Health checks
-[[services.tcp_checks]]
-  grace_period = "10s"
-  interval = "30s"
-  restart_limit = 0
-  timeout = "5s"
-
-[[services.http_checks]]
-  interval = "30s"
-  grace_period = "10s"
-  method = "get"
-  path = "/health"
-  protocol = "http"
-  timeout = "5s"
-  tls_skip_verify = false
-
 # VM Resources
-[vm]
+[[vm]]
   cpu_kind = "shared"
   cpus = 2
   memory_mb = 2048
-
-# Auto-scaling configuration
-[metrics]
-  port = 9091
-  path = "/metrics"
 
 # Deploy to multiple regions for global coverage
 # Primary: US East (iad)

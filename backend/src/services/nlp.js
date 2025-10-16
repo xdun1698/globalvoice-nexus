@@ -160,22 +160,28 @@ class NLPService {
   }
 
   /**
-   * Generate response using GPT-4o
+   * Generate response using GPT-4o with full context
    */
-  async generateResponse(prompt, context = {}, language = 'en') {
+  async generateResponse(userMessage, fullContext = {}, agentConfig = {}) {
     try {
-      const systemPrompt = `You are an AI call agent assistant. Respond naturally and helpfully in ${language}. 
-Keep responses concise and conversational, suitable for voice interaction.
-Context: ${JSON.stringify(context)}`;
+      if (!this.openai) {
+        throw new Error('OpenAI client not initialized - API key required');
+      }
+
+      const language = agentConfig.language || 'en';
+      
+      // Build comprehensive system prompt
+      const systemPrompt = this.buildSystemPrompt(fullContext, agentConfig, language);
 
       const completion = await this.openai.chat.completions.create({
         model: process.env.OPENAI_MODEL || 'gpt-4o',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: prompt }
+          { role: 'user', content: userMessage }
         ],
         temperature: 0.7,
-        max_tokens: 150
+        max_tokens: 150,
+        top_p: 0.9
       });
 
       return completion.choices[0].message.content;
@@ -183,6 +189,88 @@ Context: ${JSON.stringify(context)}`;
       logger.error('GPT-4o generation error:', error);
       throw error;
     }
+  }
+
+  /**
+   * Build comprehensive system prompt with context
+   */
+  buildSystemPrompt(context, agentConfig, language) {
+    let prompt = agentConfig.system_prompt || `You are a professional AI voice agent. Respond naturally and helpfully in ${language}.`;
+    prompt += '\nKeep responses concise and conversational, suitable for voice interaction (1-2 sentences).\n\n';
+
+    // Add customer context
+    if (context.customer) {
+      prompt += `## Customer Information\n`;
+      prompt += `Name: ${context.customer.name || 'Unknown'}\n`;
+      prompt += `Phone: ${context.customer.phone}\n`;
+      if (context.customer.total_calls > 0) {
+        prompt += `Previous Calls: ${context.customer.total_calls}\n`;
+      }
+      if (context.customer.communication_style) {
+        prompt += `Communication Style: ${context.customer.communication_style}\n`;
+      }
+      if (context.customer.sentiment_trend) {
+        prompt += `Sentiment Trend: ${context.customer.sentiment_trend}\n`;
+      }
+      prompt += '\n';
+    }
+
+    // Add conversation history
+    if (context.conversationHistory && context.conversationHistory.length > 0) {
+      prompt += `## Conversation So Far\n`;
+      context.conversationHistory.slice(-5).forEach(turn => {
+        prompt += `${turn.speaker}: ${turn.message}\n`;
+      });
+      prompt += '\n';
+    }
+
+    // Add session context
+    if (context.currentSession) {
+      prompt += `## Current State\n`;
+      prompt += `Conversation State: ${context.currentSession.conversation_state}\n`;
+      if (context.currentSession.collected_info && Object.keys(context.currentSession.collected_info).length > 0) {
+        prompt += `Collected Information: ${JSON.stringify(context.currentSession.collected_info)}\n`;
+      }
+      if (context.currentSession.pending_actions && context.currentSession.pending_actions.length > 0) {
+        prompt += `Pending Actions: ${context.currentSession.pending_actions.join(', ')}\n`;
+      }
+      prompt += '\n';
+    }
+
+    // Add knowledge base
+    if (context.knowledge && context.knowledge.length > 0) {
+      prompt += `## Relevant Knowledge\n`;
+      context.knowledge.forEach(k => {
+        prompt += `- ${k.title}: ${k.content}\n`;
+      });
+      prompt += '\n';
+    }
+
+    // Add business rules
+    if (agentConfig.business_rules && agentConfig.business_rules.length > 0) {
+      prompt += `## Business Rules\n`;
+      agentConfig.business_rules.forEach(rule => {
+        prompt += `- ${rule}\n`;
+      });
+      prompt += '\n';
+    }
+
+    // Add special instructions
+    if (agentConfig.special_instructions) {
+      prompt += `## Special Instructions\n${agentConfig.special_instructions}\n\n`;
+    }
+
+    // Add guidelines
+    prompt += `## Response Guidelines\n`;
+    prompt += `1. Be ${agentConfig.conversation_style || 'professional'} and ${agentConfig.personality || 'helpful'}\n`;
+    prompt += `2. Reference previous conversation if relevant\n`;
+    prompt += `3. Use customer's name if known\n`;
+    prompt += `4. Match their communication style\n`;
+    prompt += `5. Be concise (1-2 sentences for voice)\n`;
+    prompt += `6. If you don't know something, say so and offer to find out\n`;
+    prompt += `7. Always be empathetic and solution-oriented\n`;
+
+    return prompt;
   }
 
   /**

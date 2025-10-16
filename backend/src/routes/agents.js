@@ -165,4 +165,67 @@ router.get('/:id/stats', async (req, res) => {
   }
 });
 
+// Assign phone number to agent
+router.post('/:id/phone-number', async (req, res) => {
+  try {
+    const db = getDatabase();
+    const { phoneNumber } = req.body;
+
+    // Verify agent belongs to user
+    const agent = await db('agents')
+      .where({ id: req.params.id, user_id: req.user.id })
+      .first();
+
+    if (!agent) {
+      return res.status(404).json({ error: 'Agent not found' });
+    }
+
+    // Check if phone number exists or create it
+    let phoneRecord = await db('phone_numbers')
+      .where({ number: phoneNumber })
+      .first();
+
+    if (!phoneRecord) {
+      // Create phone number record
+      [phoneRecord] = await db('phone_numbers').insert({
+        user_id: req.user.id,
+        number: phoneNumber,
+        agent_id: req.params.id,
+        country_code: phoneNumber.substring(0, 2),
+        created_at: new Date()
+      }).returning('*');
+    } else {
+      // Update existing phone number
+      await db('phone_numbers')
+        .where({ number: phoneNumber })
+        .update({
+          agent_id: req.params.id,
+          updated_at: new Date()
+        });
+    }
+
+    logger.info(`Phone number ${phoneNumber} assigned to agent ${req.params.id}`);
+    res.json({ message: 'Phone number assigned successfully', phoneNumber: phoneRecord });
+  } catch (error) {
+    logger.error('Error assigning phone number:', error);
+    res.status(500).json({ error: 'Failed to assign phone number' });
+  }
+});
+
+// Get agent's assigned phone numbers
+router.get('/:id/phone-numbers', async (req, res) => {
+  try {
+    const db = getDatabase();
+    
+    const phoneNumbers = await db('phone_numbers')
+      .where({ agent_id: req.params.id })
+      .select('*');
+
+    res.json({ phoneNumbers });
+  } catch (error) {
+    logger.error('Error fetching phone numbers:', error);
+    res.status(500).json({ error: 'Failed to fetch phone numbers' });
+  }
+});
+
 module.exports = router;
