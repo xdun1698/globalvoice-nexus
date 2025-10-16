@@ -125,7 +125,8 @@ class TelephonyService {
       const twiml = this.generateInteractiveTwiML(
         translatedGreeting,
         callRecord.id,
-        detectedLanguage
+        detectedLanguage,
+        agent
       );
 
       res.type('text/xml');
@@ -188,7 +189,7 @@ class TelephonyService {
 
       // Check if call should end
       if (nlpResponse.shouldEndCall) {
-        const twiml = this.generateTwiML(nlpResponse.response, true);
+        const twiml = this.generateTwiML(nlpResponse.response, true, agent);
         res.type('text/xml');
         res.send(twiml);
         return;
@@ -198,7 +199,8 @@ class TelephonyService {
       const twiml = this.generateInteractiveTwiML(
         nlpResponse.response,
         callId,
-        language
+        language,
+        agent
       );
 
       res.type('text/xml');
@@ -213,12 +215,15 @@ class TelephonyService {
   /**
    * Generate TwiML for simple response
    */
-  generateTwiML(message, hangup = false) {
+  generateTwiML(message, hangup = false, agent = null) {
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const twiml = new VoiceResponse();
     
+    // Use agent's configured voice or default
+    const voice = agent?.voice || 'Polly.Joanna';
+    
     twiml.say({
-      voice: 'Polly.Joanna',
+      voice: voice,
       language: 'en-US'
     }, message);
 
@@ -232,7 +237,7 @@ class TelephonyService {
   /**
    * Generate interactive TwiML with speech recognition
    */
-  generateInteractiveTwiML(message, callId, language = 'en') {
+  generateInteractiveTwiML(message, callId, language = 'en', agent = null) {
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const twiml = new VoiceResponse();
 
@@ -246,8 +251,11 @@ class TelephonyService {
       profanityFilter: false
     });
 
+    // Use agent's configured voice or language default
+    const voice = agent?.voice || this.getTwilioVoice(language);
+
     gather.say({
-      voice: this.getTwilioVoice(language),
+      voice: voice,
       language: this.getTwilioLanguageCode(language)
     }, message);
 

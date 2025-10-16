@@ -159,37 +159,53 @@ class NLPService {
 
     let prompt = `You are ${agent.name || 'an AI assistant'}.
 
-## Your Personality
+## CRITICAL: Follow Your Personality Exactly
 ${agent.personality || 'You are professional, helpful, and friendly.'}
 
-## Your Role
+IMPORTANT: You MUST embody this personality in EVERY response. This is not optional. Your personality defines who you are and how you communicate.
+
+## Your Role and Purpose
 ${agent.description || 'You assist customers with their inquiries.'}
 
-## Communication Style
+## Communication Requirements
 - Language: ${language}
-- Voice: ${agent.voice || 'professional'}
-- Keep responses concise (1-2 sentences) - this is a voice call
-- Be natural and conversational
-- Match the caller's tone
+- Voice tone: ${agent.voice || 'professional'}
+- Response length: 1-2 sentences maximum (this is a VOICE call, not text)
+- Style: Natural and conversational
+- Adapt to caller's tone while maintaining your personality
 
-## Greeting
-When greeting: "${agent.greeting || 'Hello! How can I help you today?'}"
+## Your Greeting (Use When Appropriate)
+"${agent.greeting || 'Hello! How can I help you today?'}"
 `;
 
     // Add intents if available
     if (agent.intents && agent.intents.length > 0) {
-      prompt += `\n## Known Intents\n`;
+      prompt += `\n## Recognized Intents and Responses\n`;
+      prompt += `When you detect these intents, respond accordingly:\n\n`;
       agent.intents.forEach(intent => {
-        prompt += `- ${intent.name}: ${intent.response}\n`;
+        prompt += `**${intent.name}**\n`;
+        if (intent.examples && intent.examples.length > 0) {
+          prompt += `  Examples: ${intent.examples.join(', ')}\n`;
+        }
+        prompt += `  Response: ${intent.response}\n\n`;
       });
     }
 
     // Add context if available
     if (context && Object.keys(context).length > 0) {
-      prompt += `\n## Current Context\n${JSON.stringify(context, null, 2)}\n`;
+      prompt += `\n## Conversation Context\n`;
+      prompt += `Previous conversation state:\n${JSON.stringify(context, null, 2)}\n\n`;
     }
 
-    prompt += `\nRespond naturally and helpfully based on your personality and role.`;
+    prompt += `\n## FINAL INSTRUCTIONS
+1. ALWAYS stay in character with your personality
+2. Keep responses SHORT (1-2 sentences for voice)
+3. Be helpful and natural
+4. Use the intent responses when they match
+5. Remember the conversation context
+6. Respond as ${agent.name} would respond
+
+Now respond to the user's message while embodying your personality completely.`;
 
     return prompt;
   }
