@@ -250,26 +250,95 @@ export default function AgentBuilder() {
                 Voice Type
               </label>
               <select {...register('voice')} className="input">
-                <option value="Polly.Joanna">Joanna (US Female)</option>
-                <option value="Polly.Matthew">Matthew (US Male)</option>
-                <option value="Polly.Amy">Amy (UK Female)</option>
-                <option value="Polly.Brian">Brian (UK Male)</option>
-                <option value="Polly.Conchita">Conchita (Spanish Female)</option>
-                <option value="Polly.Celine">Celine (French Female)</option>
+                <optgroup label="US English - Female">
+                  <option value="Polly.Joanna">Joanna (Professional)</option>
+                  <option value="Polly.Kendra">Kendra (Younger)</option>
+                  <option value="Polly.Kimberly">Kimberly</option>
+                  <option value="Polly.Salli">Salli</option>
+                  <option value="Polly.Ivy">Ivy (Child)</option>
+                </optgroup>
+                <optgroup label="US English - Male">
+                  <option value="Polly.Matthew">Matthew (Professional)</option>
+                  <option value="Polly.Joey">Joey</option>
+                  <option value="Polly.Justin">Justin (Younger)</option>
+                </optgroup>
+                <optgroup label="UK English">
+                  <option value="Polly.Amy">Amy (Female)</option>
+                  <option value="Polly.Brian">Brian (Male)</option>
+                  <option value="Polly.Emma">Emma (Female)</option>
+                </optgroup>
+                <optgroup label="Spanish">
+                  <option value="Polly.Conchita">Conchita (Female)</option>
+                  <option value="Polly.Enrique">Enrique (Male)</option>
+                  <option value="Polly.Penelope">Penelope (US Female)</option>
+                  <option value="Polly.Miguel">Miguel (US Male)</option>
+                </optgroup>
+                <optgroup label="French">
+                  <option value="Polly.Celine">Celine (Female)</option>
+                  <option value="Polly.Mathieu">Mathieu (Male)</option>
+                  <option value="Polly.Lea">Lea (Female)</option>
+                </optgroup>
+                <optgroup label="German">
+                  <option value="Polly.Marlene">Marlene (Female)</option>
+                  <option value="Polly.Hans">Hans (Male)</option>
+                  <option value="Polly.Vicki">Vicki (Female)</option>
+                </optgroup>
+                <optgroup label="Other Languages">
+                  <option value="Polly.Carla">Carla (Italian Female)</option>
+                  <option value="Polly.Giorgio">Giorgio (Italian Male)</option>
+                  <option value="Polly.Vitoria">Vitoria (Portuguese Female)</option>
+                  <option value="Polly.Ricardo">Ricardo (Portuguese Male)</option>
+                </optgroup>
               </select>
+              <p className="mt-1 text-sm text-gray-500">Select the voice that matches your agent's character</p>
             </div>
 
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Personality
+                Expertise & Knowledge Base
               </label>
               <textarea
                 {...register('personality')}
-                rows={3}
+                rows={8}
                 className="input"
-                placeholder="You are a professional and friendly customer support agent. Be helpful, empathetic, and concise. Ask clarifying questions when needed."
+                placeholder="You are an expert in [your field] with [X years] of experience. You know about:&#10;&#10;- [Knowledge area 1]&#10;- [Knowledge area 2]&#10;- [Knowledge area 3]&#10;&#10;You speak in a [communication style] manner and are [personality traits].&#10;&#10;Example: You are an expert deer hunting guide with 20 years of experience. You know about whitetail deer behavior, hunting techniques, equipment selection, and regulations. You speak in a friendly, down-to-earth country style."
               />
-              <p className="mt-1 text-sm text-gray-500">Describe how the agent should behave and respond</p>
+              <div className="mt-2 space-y-2">
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800 font-medium mb-1">💡 Pro Tip: Be Specific!</p>
+                  <p className="text-sm text-blue-700">
+                    The more detailed you are about the agent's expertise, the better it will perform. 
+                    Include specific knowledge areas, terminology, and communication style. 
+                    The AI will act as an expert in whatever you describe here.
+                  </p>
+                </div>
+                
+                <details className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <summary className="text-sm font-medium text-gray-700 cursor-pointer">
+                    📚 View Examples
+                  </summary>
+                  <div className="mt-3 space-y-3 text-sm text-gray-600">
+                    <div>
+                      <p className="font-medium text-gray-800 mb-1">Deer Hunting Expert:</p>
+                      <p className="text-xs bg-white p-2 rounded border">
+                        You are an expert deer hunting guide with 20 years of experience. You know about whitetail deer behavior, rutting season, hunting techniques (stand hunting, calling, scent control), equipment (rifles, bows, tree stands), and regulations. You speak in a friendly, down-to-earth country style using phrases like "partner" and "reckon."
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-800 mb-1">Healthcare Support:</p>
+                      <p className="text-xs bg-white p-2 rounded border">
+                        You are a registered nurse with 15 years of experience. You know about common health issues, medications, preventive care, and when to seek medical attention. You're warm, patient, and empathetic. You explain medical concepts in simple terms and never diagnose but help people understand when to see a doctor.
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-800 mb-1">Tech Support:</p>
+                      <p className="text-xs bg-white p-2 rounded border">
+                        You are a senior IT specialist with 10 years of experience. You know about Windows/Mac troubleshooting, networking, software issues, and hardware problems. You're patient and methodical, breaking down complex issues into simple steps. You never assume technical knowledge.
+                      </p>
+                    </div>
+                  </div>
+                </details>
+              </div>
             </div>
 
             <div className="md:col-span-2">
