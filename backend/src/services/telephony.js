@@ -23,6 +23,37 @@ class TelephonyService {
   }
 
   /**
+   * Normalize Polly voice to Neural variant when possible.
+   * Example: Polly.Joanna -> Polly.Joanna-Neural
+   */
+  normalizeVoiceToNeural(voice, isoCode = 'en') {
+    const baseVoice = voice || this.getTwilioVoice(isoCode);
+    if (typeof baseVoice === 'string' && baseVoice.startsWith('Polly.') && !baseVoice.includes('-Neural')) {
+      return `${baseVoice}-Neural`;
+    }
+    return baseVoice;
+  }
+
+  /**
+   * Escape text content for inclusion in SSML
+   */
+  escapeForSSML(text) {
+    if (!text) return '';
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  /**
+   * Wrap plain text with Amazon Polly SSML for conversational, natural delivery
+   */
+  buildSSML(message) {
+    const safe = this.escapeForSSML(message);
+    return `<speak><amazon:domain name="conversational"><prosody rate="medium" pitch="+2%">${safe}</prosody></amazon:domain></speak>`;
+  }
+
+  /**
    * Initiate an outbound call
    */
   async makeCall(to, agentId, userId) {
@@ -219,13 +250,14 @@ class TelephonyService {
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const twiml = new VoiceResponse();
     
-    // Use agent's configured voice or default
-    const voice = agent?.voice || 'Polly.Joanna';
+    // Use agent's configured voice (Neural) or default Neural
+    const voice = this.normalizeVoiceToNeural(agent?.voice, 'en');
+    const ssml = this.buildSSML(message);
     
     twiml.say({
       voice: voice,
       language: 'en-US'
-    }, message);
+    }, ssml);
 
     if (hangup) {
       twiml.hangup();
@@ -251,19 +283,20 @@ class TelephonyService {
       profanityFilter: false
     });
 
-    // Use agent's configured voice or language default
-    const voice = agent?.voice || this.getTwilioVoice(language);
+    // Use agent's configured voice (Neural) or language default (Neural)
+    const voice = this.normalizeVoiceToNeural(agent?.voice || this.getTwilioVoice(language), language);
+    const ssml = this.buildSSML(message);
 
     gather.say({
       voice: voice,
       language: this.getTwilioLanguageCode(language)
-    }, message);
+    }, ssml);
 
     // If no input, repeat the message with same voice
     twiml.say({
       voice: voice,
       language: this.getTwilioLanguageCode(language)
-    }, message);
+    }, ssml);
     
     twiml.redirect(`${process.env.BACKEND_URL}/api/webhooks/twilio/speech?callId=${callId}&language=${language}`);
 
