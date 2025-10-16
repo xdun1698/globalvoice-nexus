@@ -129,6 +129,7 @@ export default function AgentBuilder() {
           setValue('voice', agent.voice || 'female');
           setValue('personality', agent.personality || 'professional');
           setValue('enableVoiceCloning', agent.enable_voice_cloning || false);
+          setValue('phone_numbers', agent.phone_numbers || []);
           
           // Set intents and workflows
           if (agent.intents && Array.isArray(agent.intents)) {
@@ -282,6 +283,30 @@ export default function AgentBuilder() {
                 placeholder="Hello! How can I help you today?"
               />
             </div>
+
+            {/* Phone Numbers Section */}
+            {isEditing && (
+              <div className="md:col-span-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-900">Assigned Phone Numbers</h3>
+                    <p className="text-xs text-gray-500 mt-1">Phone numbers assigned to this agent</p>
+                  </div>
+                </div>
+                {watch('phone_numbers') && watch('phone_numbers').length > 0 ? (
+                  <div className="space-y-2">
+                    {watch('phone_numbers').map((phone, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 bg-white rounded border">
+                        <span className="font-medium text-gray-900">{phone.number}</span>
+                        <span className="text-xs text-gray-500">{phone.country_code}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">No phone numbers assigned yet. Go to Phone Numbers page to assign one.</p>
+                )}
+              </div>
+            )}
 
             <div className="md:col-span-2">
               <label className="flex items-center">
