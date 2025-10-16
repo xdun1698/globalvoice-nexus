@@ -215,8 +215,7 @@ router.post('/:id/phone-number', async (req, res) => {
       await db('phone_numbers')
         .where({ number: phoneNumber })
         .update({
-          agent_id: req.params.id,
-          updated_at: new Date()
+          agent_id: req.params.id
         });
     }
 
