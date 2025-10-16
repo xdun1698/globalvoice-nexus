@@ -34,6 +34,7 @@ RUN npm ci --only=production && npm cache clean --force
 
 # Copy built application from builder
 COPY --from=builder --chown=nodejs:nodejs /app/src ./src
+COPY --from=builder --chown=nodejs:nodejs /app/migrations ./migrations
 
 # Switch to non-root user
 USER nodejs
