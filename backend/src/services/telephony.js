@@ -259,8 +259,13 @@ class TelephonyService {
       language: this.getTwilioLanguageCode(language)
     }, message);
 
-    // If no input, repeat the message
-    twiml.redirect(`${process.env.BACKEND_URL}/api/webhooks/twilio/voice?callId=${callId}`);
+    // If no input, repeat the message with same voice
+    twiml.say({
+      voice: voice,
+      language: this.getTwilioLanguageCode(language)
+    }, message);
+    
+    twiml.redirect(`${process.env.BACKEND_URL}/api/webhooks/twilio/speech?callId=${callId}&language=${language}`);
 
     return twiml.toString();
   }
