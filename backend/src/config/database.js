@@ -17,7 +17,7 @@ const knexConfig = {
     max: parseInt(process.env.DATABASE_POOL_SIZE) || 10
   },
   migrations: {
-    directory: './migrations',
+    directory: __dirname + '/../../migrations',
     tableName: 'knex_migrations'
   },
   seeds: {
