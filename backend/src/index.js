@@ -18,6 +18,7 @@ const contactRoutes = require('./routes/contacts');
 const analyticsRoutes = require('./routes/analytics');
 const integrationRoutes = require('./routes/integrations');
 const webhookRoutes = require('./routes/webhooks');
+const phoneNumberRoutes = require('./routes/phoneNumbers');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -97,6 +98,7 @@ app.use('/api/agents', authenticate, agentRoutes);
 app.use('/api/calls', authenticate, callRoutes);
 app.use('/api/contacts', authenticate, contactRoutes);
 app.use('/api/analytics', authenticate, analyticsRoutes);
+app.use('/api/phone-numbers', authenticate, phoneNumberRoutes);
 app.use('/api/integrations', authenticate, integrationRoutes);
 app.use('/api/webhooks', webhookRoutes); // No auth for webhooks
 
