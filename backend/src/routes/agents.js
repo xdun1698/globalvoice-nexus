@@ -11,6 +11,15 @@ router.get('/', async (req, res) => {
       .where({ user_id: req.user.id })
       .orderBy('created_at', 'desc');
 
+    // Get phone numbers for each agent
+    for (const agent of agents) {
+      const phoneNumbers = await db('phone_numbers')
+        .where({ agent_id: agent.id })
+        .select('id', 'number', 'country_code', 'capabilities');
+      
+      agent.phone_numbers = phoneNumbers;
+    }
+
     res.json({ agents });
   } catch (error) {
     logger.error('Error fetching agents:', error);
@@ -29,6 +38,13 @@ router.get('/:id', async (req, res) => {
     if (!agent) {
       return res.status(404).json({ error: 'Agent not found' });
     }
+
+    // Get phone numbers for this agent
+    const phoneNumbers = await db('phone_numbers')
+      .where({ agent_id: agent.id })
+      .select('id', 'number', 'country_code', 'capabilities');
+    
+    agent.phone_numbers = phoneNumbers;
 
     res.json({ agent });
   } catch (error) {
