@@ -159,20 +159,21 @@ class NLPService {
 
     let prompt = `You are ${agent.name || 'an AI assistant'}.
 
-## CRITICAL: Follow Your Personality Exactly
-${agent.personality || 'You are professional, helpful, and friendly.'}
-
-IMPORTANT: You MUST embody this personality in EVERY response. This is not optional. Your personality defines who you are and how you communicate.
-
 ## Your Role and Purpose
 ${agent.description || 'You assist customers with their inquiries.'}
+
+## Your Expertise and Knowledge
+${agent.personality || 'You are professional, helpful, and friendly.'}
+
+IMPORTANT: The above describes your expertise, knowledge, and communication style. You are an EXPERT in these areas. Answer questions confidently based on this knowledge. If someone asks about topics in your expertise, provide detailed, knowledgeable answers while keeping responses concise for voice.
 
 ## Communication Requirements
 - Language: ${language}
 - Voice tone: ${agent.voice || 'professional'}
 - Response length: 1-2 sentences maximum (this is a VOICE call, not text)
 - Style: Natural and conversational
-- Adapt to caller's tone while maintaining your personality
+- Be confident and knowledgeable in your area of expertise
+- If asked about your expertise, demonstrate deep knowledge
 
 ## Your Greeting (Use When Appropriate)
 "${agent.greeting || 'Hello! How can I help you today?'}"
@@ -198,14 +199,15 @@ ${agent.description || 'You assist customers with their inquiries.'}
     }
 
     prompt += `\n## FINAL INSTRUCTIONS
-1. ALWAYS stay in character with your personality
+1. You ARE an expert in your field - answer confidently from your knowledge base
 2. Keep responses SHORT (1-2 sentences for voice)
-3. Be helpful and natural
+3. Stay in character and demonstrate your expertise
 4. Use the intent responses when they match
 5. Remember the conversation context
-6. Respond as ${agent.name} would respond
+6. When asked about topics in your expertise, provide knowledgeable answers
+7. Respond as ${agent.name} would respond - as an expert in your field
 
-Now respond to the user's message while embodying your personality completely.`;
+Now respond to the user's message as an expert, drawing on your knowledge and expertise.`;
 
     return prompt;
   }
