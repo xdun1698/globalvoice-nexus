@@ -20,7 +20,7 @@ export default function AgentBuilder() {
   const navigate = useNavigate();
   const isEditing = !!id;
 
-  const { register, handleSubmit, watch, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     defaultValues: {
       name: '',
       description: '',
@@ -122,22 +122,37 @@ export default function AgentBuilder() {
           const agent = response.data.agent;
           
           // Set form values
-          Object.keys(agent).forEach(key => {
-            if (key !== 'intents' && key !== 'workflows') {
-              // setValue from react-hook-form would be used here
-            }
-          });
+          setValue('name', agent.name || '');
+          setValue('description', agent.description || '');
+          setValue('greeting', agent.greeting || 'Hello! How can I help you today?');
+          setValue('language', agent.language || 'en');
+          setValue('voice', agent.voice || 'female');
+          setValue('personality', agent.personality || 'professional');
+          setValue('enableVoiceCloning', agent.enable_voice_cloning || false);
           
-          if (agent.intents) setIntents(agent.intents);
-          if (agent.workflows) setWorkflows(agent.workflows);
+          // Set intents and workflows
+          if (agent.intents && Array.isArray(agent.intents)) {
+            setIntents(agent.intents.length > 0 ? agent.intents : [
+              { id: 1, name: 'greeting', examples: ['hello', 'hi', 'hey'], response: 'Hello! How can I assist you?' },
+              { id: 2, name: 'farewell', examples: ['goodbye', 'bye', 'see you'], response: 'Thank you for calling. Have a great day!' },
+            ]);
+          }
+          
+          if (agent.workflows && Array.isArray(agent.workflows)) {
+            setWorkflows(agent.workflows.length > 0 ? agent.workflows : [
+              { id: 1, trigger: 'greeting', action: 'respond', value: 'greeting_response' },
+              { id: 2, trigger: 'question_asked', action: 'search_knowledge_base', value: '' },
+            ]);
+          }
         } catch (error) {
+          console.error('Failed to load agent:', error);
           toast.error('Failed to load agent');
           navigate('/agents');
         }
       };
       loadAgent();
     }
-  }, [isEditing, id, navigate]);
+  }, [isEditing, id, navigate, setValue]);
 
   return (
     <div className="space-y-6 animate-fade-in">
