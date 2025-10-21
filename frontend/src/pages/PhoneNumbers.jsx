@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Phone, Plus, Edit, Trash2, Link as LinkIcon, ExternalLink, CheckCircle, XCircle } from 'lucide-react';
+import { Phone, Plus, Edit, Trash2, Link as LinkIcon, ExternalLink, CheckCircle, XCircle, RefreshCw, Download } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../lib/axios';
+import VapiSyncButton from '../components/VapiSyncButton';
+import VapiSyncStatus from '../components/VapiSyncStatus';
 
 export default function PhoneNumbers() {
   const [phoneNumbers, setPhoneNumbers] = useState([]);
@@ -12,6 +14,7 @@ export default function PhoneNumbers() {
   const [selectedPhone, setSelectedPhone] = useState(null);
   const [newPhone, setNewPhone] = useState('');
   const [selectedAgentId, setSelectedAgentId] = useState('');
+  const [showSyncStatus, setShowSyncStatus] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -105,32 +108,56 @@ export default function PhoneNumbers() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Phone Numbers</h1>
-          <p className="mt-2 text-gray-600">Manage virtual phone numbers and assign them to agents</p>
+          <p className="mt-2 text-gray-600">Manage phone numbers from Vapi and assign them to agents</p>
         </div>
-        <button onClick={() => setShowAddModal(true)} className="btn btn-primary flex items-center">
-          <Plus className="h-5 w-5 mr-2" />
-          Add Phone Number
-        </button>
+        <div className="flex gap-3">
+          <button 
+            onClick={() => setShowSyncStatus(!showSyncStatus)} 
+            className="btn btn-secondary flex items-center"
+          >
+            <RefreshCw className="h-5 w-5 mr-2" />
+            Sync Status
+          </button>
+          <button onClick={() => setShowAddModal(true)} className="btn btn-primary flex items-center">
+            <Plus className="h-5 w-5 mr-2" />
+            Add Phone Number
+          </button>
+        </div>
       </div>
 
-      {/* Twilio Setup Info */}
-      <div className="card bg-primary-50 border-primary-200">
-        <div className="flex items-start">
-          <Phone className="h-6 w-6 text-primary-600 mr-3 mt-1" />
-          <div className="flex-1">
-            <h3 className="font-semibold text-gray-900 mb-2">Twilio Phone Numbers</h3>
-            <p className="text-sm text-gray-600 mb-3">
-              Purchase phone numbers from Twilio and add them here. Each number can be assigned to one agent.
-            </p>
-            <a 
-              href="https://console.twilio.com/us1/develop/phone-numbers/manage/search?frameUrl=%2Fconsole%2Fphone-numbers%2Fsearch%3Fx-target-region%3Dus1&currentFrameUrl=%2Fconsole%2Fphone-numbers%2Fsearch%3FisoCountry%3DUS%26types%255B%255D%3DLocal%26types%255B%255D%3DTollfree%26capabilities%255B%255D%3DVoice%26capabilities%255B%255D%3DSMS%26capabilities%255B%255D%3DMMS%26searchTerm%3D%26searchFilter%3Dleft%26searchType%3Dnumber%26x-target-region%3Dus1%26__override_layout__%3Dembed%26bifrost%3Dtrue" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center text-sm text-primary-600 hover:text-primary-700 font-medium"
-            >
-              Buy Phone Numbers on Twilio
-              <ExternalLink className="h-4 w-4 ml-1" />
-            </a>
+      {/* Sync Status Section */}
+      {showSyncStatus && (
+        <div className="card">
+          <VapiSyncStatus autoRefresh={false} />
+        </div>
+      )}
+
+      {/* Vapi Integration Info */}
+      <div className="card bg-blue-50 border-blue-200">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start flex-1">
+            <Phone className="h-6 w-6 text-blue-600 mr-3 mt-1" />
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 mb-2">Vapi Phone Numbers</h3>
+              <p className="text-sm text-gray-600 mb-3">
+                Import phone numbers from your Vapi dashboard or add them manually. Each number can be assigned to one agent.
+              </p>
+              <div className="flex gap-3">
+                <VapiSyncButton 
+                  type="phone-numbers-from" 
+                  onSyncComplete={() => loadData()}
+                />
+                <a 
+                  href="https://vapi.ai/dashboard" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center text-sm text-blue-600 hover:text-blue-700 font-medium px-4 py-2 border border-blue-300 rounded-lg hover:bg-blue-100 transition-colors"
+                >
+                  Manage in Vapi Dashboard
+                  <ExternalLink className="h-4 w-4 ml-1" />
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -145,11 +172,17 @@ export default function PhoneNumbers() {
         <div className="text-center py-12 card">
           <Phone className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">No phone numbers yet</h3>
-          <p className="text-gray-600 mb-6">Add your first Twilio phone number to start receiving calls</p>
-          <button onClick={() => setShowAddModal(true)} className="btn btn-primary inline-flex items-center">
-            <Plus className="h-5 w-5 mr-2" />
-            Add Your First Number
-          </button>
+          <p className="text-gray-600 mb-6">Import phone numbers from Vapi or add them manually</p>
+          <div className="flex gap-3 justify-center">
+            <VapiSyncButton 
+              type="phone-numbers-from" 
+              onSyncComplete={() => loadData()}
+            />
+            <button onClick={() => setShowAddModal(true)} className="btn btn-secondary inline-flex items-center">
+              <Plus className="h-5 w-5 mr-2" />
+              Add Manually
+            </button>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -183,8 +216,14 @@ export default function PhoneNumbers() {
 
               <div className="text-sm text-gray-600 mb-4">
                 <p>Country: {phone.country_code || 'N/A'}</p>
+                {phone.vapi_phone_id && (
+                  <p className="text-xs text-blue-600 mt-1 flex items-center">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Synced with Vapi
+                  </p>
+                )}
                 {phone.twilio_sid && (
-                  <p className="text-xs text-gray-500 mt-1 truncate">SID: {phone.twilio_sid}</p>
+                  <p className="text-xs text-gray-500 mt-1 truncate">Twilio SID: {phone.twilio_sid}</p>
                 )}
               </div>
 
@@ -237,7 +276,7 @@ export default function PhoneNumbers() {
                 className="input"
               />
               <p className="mt-1 text-sm text-gray-500">
-                Enter the phone number from your Twilio account (include country code)
+                Enter the phone number from Vapi (include country code, e.g., +16826269224)
               </p>
             </div>
             <div className="flex gap-3">

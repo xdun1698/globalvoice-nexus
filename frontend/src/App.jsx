@@ -18,6 +18,7 @@ import Analytics from './pages/Analytics';
 import Integrations from './pages/Integrations';
 import Settings from './pages/Settings';
 import PhoneNumbers from './pages/PhoneNumbers';
+import VapiSync from './pages/VapiSync';
 
 function App() {
   const { isAuthenticated } = useAuthStore();
@@ -46,6 +47,7 @@ function App() {
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/integrations" element={<Integrations />} />
         <Route path="/phone-numbers" element={<PhoneNumbers />} />
+        <Route path="/vapi-sync" element={<VapiSync />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
 

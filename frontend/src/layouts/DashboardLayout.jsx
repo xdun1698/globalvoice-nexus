@@ -11,6 +11,7 @@ import {
   X,
   LogOut,
   PhoneCall,
+  RefreshCw,
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 
@@ -21,6 +22,7 @@ const navigation = [
   { name: 'Contacts', href: '/contacts', icon: Users },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Phone Numbers', href: '/phone-numbers', icon: PhoneCall },
+  { name: 'Vapi Sync', href: '/vapi-sync', icon: RefreshCw },
   { name: 'Integrations', href: '/integrations', icon: Settings },
 ];
 

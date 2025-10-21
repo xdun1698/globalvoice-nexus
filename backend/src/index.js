@@ -20,6 +20,7 @@ const integrationRoutes = require('./routes/integrations');
 const webhookRoutes = require('./routes/webhooks');
 const phoneNumberRoutes = require('./routes/phoneNumbers');
 const vapiRoutes = require('./routes/vapi');
+const vapiSyncRoutes = require('./routes/vapiSync');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -110,6 +111,7 @@ app.use('/api/phone-numbers', authenticate, phoneNumberRoutes);
 app.use('/api/integrations', authenticate, integrationRoutes);
 app.use('/api/webhooks', webhookRoutes); // No auth for webhooks
 app.use('/api/vapi', vapiRoutes); // No auth for Vapi webhooks
+app.use('/api/vapi-sync', authenticate, vapiSyncRoutes); // Vapi sync endpoints
 
 // Error handling
 app.use(errorHandler);
