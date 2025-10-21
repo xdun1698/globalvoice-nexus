@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { RefreshCw, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+import api from '../lib/axios';
 
 /**
  * Vapi Sync Button Component
@@ -35,16 +33,7 @@ export default function VapiSyncButton({ type = 'full', onSyncComplete }) {
     setResult(null);
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.post(
-        `${API_URL}${syncEndpoints[type]}`,
-        {},
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
+      const response = await api.post(syncEndpoints[type]);
 
       setResult(response.data);
       

@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Database, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-react';
-import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+import api from '../lib/axios';
 
 /**
  * Vapi Sync Status Component
@@ -15,15 +13,7 @@ export default function VapiSyncStatus({ autoRefresh = false }) {
 
   const fetchStatus = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(
-        `${API_URL}/api/vapi-sync/status`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
+      const response = await api.get('/api/vapi-sync/status');
       setStatus(response.data);
       setError(null);
     } catch (err) {
