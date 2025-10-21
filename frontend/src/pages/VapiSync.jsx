@@ -1,5 +1,5 @@
 import React from 'react';
-import { RefreshCw, Database, ArrowRightLeft, Download, Upload } from 'lucide-react';
+import { RefreshCw, Database, ArrowRightLeft, Download, Upload, Shield, AlertCircle } from 'lucide-react';
 import VapiSyncButton from '../components/VapiSyncButton';
 import VapiSyncStatus from '../components/VapiSyncStatus';
 
@@ -27,6 +27,25 @@ export default function VapiSync() {
         <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
           <Database className="w-5 h-5 text-blue-600" />
           <span className="text-sm font-medium text-blue-900">Bidirectional Sync</span>
+        </div>
+      </div>
+
+      {/* Safe Mode Banner */}
+      <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <Shield className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <h3 className="font-semibold text-green-900 mb-1">🛡️ Safe Mode Enabled</h3>
+            <p className="text-sm text-green-800 mb-2">
+              Sync operations are <strong>additive only</strong> - they will <strong>never delete</strong> your agents or phone numbers from either system.
+            </p>
+            <ul className="text-sm text-green-700 space-y-1 ml-4 list-disc">
+              <li><strong>Import</strong> adds new items from Vapi to your database</li>
+              <li><strong>Export</strong> creates missing items in Vapi from your database</li>
+              <li><strong>Full Sync</strong> ensures both systems have all items</li>
+              <li><strong>Never deletes</strong> - your data is always protected</li>
+            </ul>
+          </div>
         </div>
       </div>
 

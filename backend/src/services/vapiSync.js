@@ -24,6 +24,7 @@ class VapiSyncService {
   /**
    * Sync phone numbers FROM Vapi TO Database
    * Imports all Vapi phone numbers into application database
+   * SAFE MODE: Only adds/updates, never deletes existing numbers
    */
   async syncPhoneNumbersFromVapi(userId) {
     if (!this.apiKey) {
@@ -188,6 +189,7 @@ class VapiSyncService {
   /**
    * Sync assistants FROM Vapi TO Database
    * Imports all Vapi assistants as agents in application
+   * SAFE MODE: Only adds/updates, never deletes existing agents
    */
   async syncAssistantsFromVapi(userId) {
     if (!this.apiKey) {
@@ -277,6 +279,7 @@ class VapiSyncService {
   /**
    * Sync agents FROM Database TO Vapi
    * Ensures all database agents exist as assistants in Vapi
+   * SAFE MODE: Only creates/updates in Vapi, never deletes
    */
   async syncAgentsToVapi(userId) {
     if (!this.apiKey) {
@@ -358,6 +361,17 @@ class VapiSyncService {
   /**
    * Perform complete bidirectional sync
    * Syncs both phone numbers and assistants/agents in both directions
+   * SAFE MODE: Additive only - never deletes data from either system
+   * 
+   * What this does:
+   * 1. Import new items from Vapi → Database (adds missing)
+   * 2. Export new items from Database → Vapi (adds missing)
+   * 3. Update existing items with latest data
+   * 
+   * What this NEVER does:
+   * - Delete agents from Vapi
+   * - Delete agents from Database
+   * - Delete phone numbers from either system
    */
   async performFullSync(userId) {
     if (!this.apiKey) {
