@@ -19,6 +19,7 @@ const analyticsRoutes = require('./routes/analytics');
 const integrationRoutes = require('./routes/integrations');
 const webhookRoutes = require('./routes/webhooks');
 const phoneNumberRoutes = require('./routes/phoneNumbers');
+const vapiRoutes = require('./routes/vapi');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
@@ -108,6 +109,7 @@ app.use('/api/analytics', authenticate, analyticsRoutes);
 app.use('/api/phone-numbers', authenticate, phoneNumberRoutes);
 app.use('/api/integrations', authenticate, integrationRoutes);
 app.use('/api/webhooks', webhookRoutes); // No auth for webhooks
+app.use('/api/vapi', vapiRoutes); // No auth for Vapi webhooks
 
 // Error handling
 app.use(errorHandler);

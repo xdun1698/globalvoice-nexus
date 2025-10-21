@@ -42,6 +42,9 @@ export default function AgentBuilder() {
     { id: 2, trigger: 'question_asked', action: 'search_knowledge_base', value: '' },
   ]);
 
+  const [elevenLabsVoices, setElevenLabsVoices] = useState([]);
+  const [loadingVoices, setLoadingVoices] = useState(false);
+
   const addIntent = () => {
     setIntents([...intents, {
       id: Date.now(),
@@ -115,21 +118,20 @@ export default function AgentBuilder() {
 
   // Load agent data if editing
   useEffect(() => {
-    if (isEditing) {
-      const loadAgent = async () => {
+    const loadAgent = async () => {
+      if (isEditing) {
         try {
           const response = await api.get(`/api/agents/${id}`);
           const agent = response.data.agent;
           
-          // Set form values
           setValue('name', agent.name || '');
           setValue('description', agent.description || '');
           setValue('greeting', agent.greeting || 'Hello! How can I help you today?');
           setValue('language', agent.language || 'en');
           setValue('voice', agent.voice || 'female');
+          setValue('elevenlabs_voice', agent.elevenlabs_voice || 'ErXwobaYiN019PkySvjV');
           setValue('personality', agent.personality || 'professional');
           setValue('enableVoiceCloning', agent.enable_voice_cloning || false);
-          setValue('phone_numbers', agent.phone_numbers || []);
           
           // Set intents and workflows
           if (agent.intents && Array.isArray(agent.intents)) {
@@ -150,9 +152,25 @@ export default function AgentBuilder() {
           toast.error('Failed to load agent');
           navigate('/agents');
         }
-      };
-      loadAgent();
-    }
+      }
+    };
+    
+    const fetchElevenLabsVoices = async () => {
+      try {
+        setLoadingVoices(true);
+        const response = await api.get('/api/agents/voices/elevenlabs');
+        if (response.data.voices) {
+          setElevenLabsVoices(response.data.voices);
+        }
+      } catch (error) {
+        console.error('Failed to fetch ElevenLabs voices:', error);
+      } finally {
+        setLoadingVoices(false);
+      }
+    };
+    
+    loadAgent();
+    fetchElevenLabsVoices();
   }, [isEditing, id, navigate, setValue]);
 
   return (
@@ -247,50 +265,83 @@ export default function AgentBuilder() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Voice Type
+                Voice Provider & Type
               </label>
-              <select {...register('voice')} className="input">
-                <optgroup label="US English - Female">
-                  <option value="Polly.Joanna">Joanna (Professional)</option>
-                  <option value="Polly.Kendra">Kendra (Younger)</option>
-                  <option value="Polly.Kimberly">Kimberly</option>
-                  <option value="Polly.Salli">Salli</option>
-                  <option value="Polly.Ivy">Ivy (Child)</option>
+              <select {...register('elevenlabs_voice')} className="input">
+                <optgroup label="⭐⭐⭐⭐⭐ PREMIUM - Best for Customer-Facing">
+                  {loadingVoices ? (
+                    <option value="">Loading voices...</option>
+                  ) : elevenLabsVoices.length > 0 ? (
+                    elevenLabsVoices
+                      .filter(v => v.rating === 5)
+                      .map(voice => (
+                        <option key={voice.id} value={voice.id}>
+                          {voice.name} ({voice.gender}, {voice.accent}) - {voice.tone}
+                        </option>
+                      ))
+                  ) : (
+                    <>
+                      <option value="ErXwobaYiN019PkySvjV">Antoni/Will ⭐⭐⭐⭐⭐ (Male, US) - Collections/Sales</option>
+                      <option value="21m00Tcm4TlvDq8ikWAM">Rachel ⭐⭐⭐⭐⭐ (Female, US) - Support</option>
+                      <option value="pNInz6obpgDQGcFmaJgB">Adam ⭐⭐⭐⭐⭐ (Male, US) - Corporate</option>
+                      <option value="EXAVITQu4vr4xnSDxMaL">Bella ⭐⭐⭐⭐⭐ (Female, US) - Hospitality</option>
+                      <option value="TxGEqnHWrfWFTfGW9XjX">Josh ⭐⭐⭐⭐⭐ (Male, US) - Tech/Startups</option>
+                    </>
+                  )}
                 </optgroup>
-                <optgroup label="US English - Male">
-                  <option value="Polly.Matthew">Matthew (Professional)</option>
-                  <option value="Polly.Joey">Joey</option>
-                  <option value="Polly.Justin">Justin (Younger)</option>
+                <optgroup label="⭐⭐⭐⭐ EXCELLENT - Professional Quality">
+                  {elevenLabsVoices.length > 0 ? (
+                    elevenLabsVoices
+                      .filter(v => v.rating === 4)
+                      .map(voice => (
+                        <option key={voice.id} value={voice.id}>
+                          {voice.name} ({voice.gender}, {voice.accent}) - {voice.tone}
+                        </option>
+                      ))
+                  ) : (
+                    <>
+                      <option value="AZnzlk1XvdvUeBnXmlld">Domi ⭐⭐⭐⭐ (Female, US) - Sales/Leadership</option>
+                      <option value="yoZ06aMxZJJ28mfd3POQ">Sam ⭐⭐⭐⭐ (Male, US) - Storytelling</option>
+                      <option value="MF3mGyEYCl7XYWbV9V6O">Elli ⭐⭐⭐⭐ (Female, US) - Empathetic</option>
+                      <option value="VR6AewLTigWG4xSOukaG">Arnold ⭐⭐⭐⭐ (Male, US) - Technical</option>
+                      <option value="pFZP5JQG7iQjIQuC4Bku">Lily ⭐⭐⭐⭐ (Female, UK) - British</option>
+                      <option value="oWAxZDx7w5VEj9dCyTzz">Grace ⭐⭐⭐⭐ (Female, US Southern) - Hospitality</option>
+                      <option value="N2lVS1w4EtoT3dr4eOWO">Tom ⭐⭐⭐⭐ (Male, US) - Collections</option>
+                    </>
+                  )}
                 </optgroup>
-                <optgroup label="UK English">
-                  <option value="Polly.Amy">Amy (Female)</option>
-                  <option value="Polly.Brian">Brian (Male)</option>
-                  <option value="Polly.Emma">Emma (Female)</option>
+                <optgroup label="⭐⭐⭐ GOOD - Solid Performance">
+                  {elevenLabsVoices.length > 0 ? (
+                    elevenLabsVoices
+                      .filter(v => v.rating === 3)
+                      .map(voice => (
+                        <option key={voice.id} value={voice.id}>
+                          {voice.name} ({voice.gender}, {voice.accent})
+                        </option>
+                      ))
+                  ) : (
+                    <>
+                      <option value="onwK4e9ZLuTAKqWW03F9">Daniel (Male, UK)</option>
+                      <option value="XrExE9yKIg1WjnnlVkGX">Matilda (Female, US)</option>
+                      <option value="ZQe5CZNOzWyzPSCn5a3c">James (Male, Australian)</option>
+                      <option value="LcfcDJNUP1GQjkzn1xUU">Emily (Female, US)</option>
+                      <option value="GBv7mTt0atIp3Br8iCZE">Thomas (Male, US)</option>
+                    </>
+                  )}
                 </optgroup>
-                <optgroup label="Spanish">
-                  <option value="Polly.Conchita">Conchita (Female)</option>
-                  <option value="Polly.Enrique">Enrique (Male)</option>
-                  <option value="Polly.Penelope">Penelope (US Female)</option>
-                  <option value="Polly.Miguel">Miguel (US Male)</option>
-                </optgroup>
-                <optgroup label="French">
-                  <option value="Polly.Celine">Celine (Female)</option>
-                  <option value="Polly.Mathieu">Mathieu (Male)</option>
-                  <option value="Polly.Lea">Lea (Female)</option>
-                </optgroup>
-                <optgroup label="German">
-                  <option value="Polly.Marlene">Marlene (Female)</option>
-                  <option value="Polly.Hans">Hans (Male)</option>
-                  <option value="Polly.Vicki">Vicki (Female)</option>
-                </optgroup>
-                <optgroup label="Other Languages">
-                  <option value="Polly.Carla">Carla (Italian Female)</option>
-                  <option value="Polly.Giorgio">Giorgio (Italian Male)</option>
-                  <option value="Polly.Vitoria">Vitoria (Portuguese Female)</option>
-                  <option value="Polly.Ricardo">Ricardo (Portuguese Male)</option>
+                <optgroup label="🔊 AWS POLLY (Standard - Basic Voices)">
+                  <option value="Polly.Joanna">Joanna (Female, US)</option>
+                  <option value="Polly.Matthew">Matthew (Male, US)</option>
+                  <option value="Polly.Kendra">Kendra (Female, US)</option>
+                  <option value="Polly.Joey">Joey (Male, US)</option>
+                  <option value="Polly.Amy">Amy (Female, UK)</option>
+                  <option value="Polly.Brian">Brian (Male, UK)</option>
                 </optgroup>
               </select>
-              <p className="mt-1 text-sm text-gray-500">Select the voice that matches your agent's character</p>
+              <p className="mt-1 text-sm text-gray-500">
+                <span className="font-semibold">⭐ Rating:</span> 5=Premium, 4=Excellent, 3=Good | 
+                <span className="font-semibold"> Will/Antoni</span> = Best for collections
+              </p>
             </div>
 
             <div className="md:col-span-2">

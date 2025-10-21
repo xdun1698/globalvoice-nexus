@@ -3,6 +3,9 @@ const logger = require('../utils/logger');
 const { getDatabase } = require('../config/database');
 const VoiceService = require('./voice');
 const NLPService = require('./nlp');
+const ElevenLabsService = require('./elevenlabs');
+const StorageService = require('./storage');
+const axios = require('axios');
 
 class TelephonyService {
   constructor() {
@@ -20,6 +23,22 @@ class TelephonyService {
     
     this.voiceService = new VoiceService();
     this.nlpService = new NLPService();
+    this.elevenLabsService = new ElevenLabsService();
+    this.storageService = new StorageService();
+    
+    // Log storage status for debugging
+    logger.info(`Storage service status: enabled=${this.storageService.isEnabled()}`);
+    logger.info(`ElevenLabs service status: enabled=${this.elevenLabsService.isEnabled()}`);
+    
+    // Use ElevenLabs if both API key and S3 storage are configured
+    this.useElevenLabs = this.elevenLabsService.isEnabled() && this.storageService.isEnabled();
+    
+    if (this.elevenLabsService.isEnabled() && !this.storageService.isEnabled()) {
+      logger.warn('ElevenLabs API key found but S3 storage not configured - falling back to Polly');
+      logger.warn('Set AWS_S3_BUCKET, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY to enable ElevenLabs');
+    }
+    
+    logger.info(`Voice engine: ${this.useElevenLabs ? 'ElevenLabs + S3 Storage' : 'Amazon Polly'}`);
   }
 
   /**
@@ -27,10 +46,9 @@ class TelephonyService {
    * Example: Polly.Joanna -> Polly.Joanna-Neural
    */
   normalizeVoiceToNeural(voice, isoCode = 'en') {
+    // Twilio may not accept the "-Neural" suffix in voice names in all regions/accounts.
+    // Use plain Polly voice names for compatibility. Neural quality is often selected implicitly by Twilio/Polly.
     const baseVoice = voice || this.getTwilioVoice(isoCode);
-    if (typeof baseVoice === 'string' && baseVoice.startsWith('Polly.') && !baseVoice.includes('-Neural')) {
-      return `${baseVoice}-Neural`;
-    }
     return baseVoice;
   }
 
@@ -123,7 +141,9 @@ class TelephonyService {
 
       if (!phoneNumber) {
         logger.error(`No agent found for number ${To}`);
-        return this.generateTwiML('Sorry, this number is not configured.');
+        const twiml = await this.generateTwiML('Sorry, this number is not configured.');
+        res.type('text/xml');
+        return res.send(twiml);
       }
 
       const agent = await db('agents')
@@ -153,7 +173,7 @@ class TelephonyService {
       );
 
       // Generate TwiML response with gather for speech
-      const twiml = this.generateInteractiveTwiML(
+      const twiml = await this.generateInteractiveTwiML(
         translatedGreeting,
         callRecord.id,
         detectedLanguage,
@@ -164,8 +184,9 @@ class TelephonyService {
       res.send(twiml);
     } catch (error) {
       logger.error('Error handling incoming call:', error);
+      const errorTwiml = await this.generateTwiML('An error occurred. Please try again later.');
       res.type('text/xml');
-      res.send(this.generateTwiML('An error occurred. Please try again later.'));
+      res.send(errorTwiml);
     }
   }
 
@@ -184,19 +205,42 @@ class TelephonyService {
       const call = await db('calls').where({ id: callId }).first();
       const agent = await db('agents').where({ id: call.agent_id }).first();
 
+      // Normalize stored context to an object
+      let ctx = {};
+      try {
+        if (call && call.context) {
+          ctx = typeof call.context === 'string' ? JSON.parse(call.context) : call.context;
+        }
+      } catch (e) {
+        logger.warn('Failed to parse call context, resetting to empty object');
+        ctx = {};
+      }
+
+      // If no speech was detected, re-prompt the caller
+      if (!SpeechResult || String(SpeechResult).trim().length === 0) {
+        const reprompt = await this.generateInteractiveTwiML(
+          "Sorry, I didn't catch that. Could you say that again?",
+          callId,
+          language,
+          agent
+        );
+        res.type('text/xml');
+        return res.send(reprompt);
+      }
+
       // Process with NLP engine (with agent data for OpenAI fallback)
       const nlpResponse = await this.nlpService.processInput({
         text: SpeechResult,
         language,
         agentId: agent.id,
         callId,
-        context: call.context || {},
+        context: ctx,
         agent: agent // Pass full agent data for personality/fallback
       });
 
       // Update call context
       await db('calls').where({ id: callId }).update({
-        context: JSON.stringify(nlpResponse.context),
+        context: JSON.stringify(nlpResponse.context || {}),
         updated_at: new Date()
       });
 
@@ -220,14 +264,14 @@ class TelephonyService {
 
       // Check if call should end
       if (nlpResponse.shouldEndCall) {
-        const twiml = this.generateTwiML(nlpResponse.response, true, agent);
+        const twiml = await this.generateTwiML(nlpResponse.response, true, agent);
         res.type('text/xml');
         res.send(twiml);
         return;
       }
 
       // Continue conversation
-      const twiml = this.generateInteractiveTwiML(
+      const twiml = await this.generateInteractiveTwiML(
         nlpResponse.response,
         callId,
         language,
@@ -238,26 +282,38 @@ class TelephonyService {
       res.send(twiml);
     } catch (error) {
       logger.error('Error handling speech input:', error);
+      const errorTwiml = await this.generateTwiML('I apologize, but I encountered an error. Please try again.');
       res.type('text/xml');
-      res.send(this.generateTwiML('I apologize, but I encountered an error. Please try again.'));
+      res.send(errorTwiml);
     }
   }
 
   /**
    * Generate TwiML for simple response
    */
-  generateTwiML(message, hangup = false, agent = null) {
+  async generateTwiML(message, hangup = false, agent = null) {
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const twiml = new VoiceResponse();
     
-    // Use agent's configured voice (Neural) or default Neural
-    const voice = this.normalizeVoiceToNeural(agent?.voice, 'en');
-    const ssml = this.buildSSML(message);
-    
-    twiml.say({
-      voice: voice,
-      language: 'en-US'
-    }, ssml);
+    // Use ElevenLabs if available, otherwise fall back to Polly
+    if (this.useElevenLabs) {
+      try {
+        const audioUrl = await this.generateElevenLabsAudio(message, agent);
+        twiml.play(audioUrl);
+      } catch (error) {
+        logger.error('ElevenLabs TTS failed, falling back to Polly:', error.message);
+        // Fall back to Polly
+        const voice = this.normalizeVoiceToNeural(agent?.voice, 'en');
+        const ssml = this.buildSSML(message);
+        twiml.say({ voice: voice, language: 'en-US' }, ssml);
+      }
+    } else {
+      // Use Polly
+      const voice = this.normalizeVoiceToNeural(agent?.voice, 'en');
+      logger.info(`TTS generateTwiML using voice=${voice}`);
+      const ssml = this.buildSSML(message);
+      twiml.say({ voice: voice, language: 'en-US' }, ssml);
+    }
 
     if (hangup) {
       twiml.hangup();
@@ -269,7 +325,7 @@ class TelephonyService {
   /**
    * Generate interactive TwiML with speech recognition
    */
-  generateInteractiveTwiML(message, callId, language = 'en', agent = null) {
+  async generateInteractiveTwiML(message, callId, language = 'en', agent = null) {
     const VoiceResponse = twilio.twiml.VoiceResponse;
     const twiml = new VoiceResponse();
 
@@ -277,29 +333,37 @@ class TelephonyService {
       input: 'speech',
       action: `${process.env.BACKEND_URL}/api/webhooks/twilio/speech?callId=${callId}&language=${language}`,
       language: this.getTwilioLanguageCode(language),
-      speechTimeout: 'auto',
+      timeout: 5,
+      speechTimeout: 3,
       speechModel: 'phone_call',
       enhanced: true,
-      profanityFilter: false
+      profanityFilter: false,
+      actionOnEmptyResult: true,
+      hints: 'payment, pay, money, dollar, account, balance, yes, no'
     });
 
-    // Use agent's configured voice (Neural) or language default (Neural)
-    const voice = this.normalizeVoiceToNeural(agent?.voice || this.getTwilioVoice(language), language);
-    const ssml = this.buildSSML(message);
-
-    gather.say({
-      voice: voice,
-      language: this.getTwilioLanguageCode(language)
-    }, ssml);
-
-    // If no input, repeat the message with same voice
-    twiml.say({
-      voice: voice,
-      language: this.getTwilioLanguageCode(language)
-    }, ssml);
+    // Use ElevenLabs if available, otherwise fall back to Polly
+    if (this.useElevenLabs) {
+      try {
+        const audioUrl = await this.generateElevenLabsAudio(message, agent, language);
+        gather.play(audioUrl);
+      } catch (error) {
+        logger.error('ElevenLabs TTS failed, falling back to Polly:', error.message);
+        // Fall back to Polly
+        const voice = this.normalizeVoiceToNeural(agent?.voice || this.getTwilioVoice(language), language);
+        const ssml = this.buildSSML(message);
+        gather.say({ voice: voice, language: this.getTwilioLanguageCode(language) }, ssml);
+      }
+    } else {
+      // Use Polly
+      const voice = this.normalizeVoiceToNeural(agent?.voice || this.getTwilioVoice(language), language);
+      logger.info(`TTS generateInteractiveTwiML using voice=${voice}, language=${language}`);
+      const ssml = this.buildSSML(message);
+      gather.say({ voice: voice, language: this.getTwilioLanguageCode(language) }, ssml);
+    }
     
-    twiml.redirect(`${process.env.BACKEND_URL}/api/webhooks/twilio/speech?callId=${callId}&language=${language}`);
-
+    // Twilio will POST to the action URL above, even if no input (actionOnEmptyResult)
+    // No explicit redirect needed here.
     return twiml.toString();
   }
 
@@ -343,6 +407,38 @@ class TelephonyService {
       'ru': 'Polly.Tatyana'
     };
     return voiceMap[isoCode] || 'Polly.Joanna';
+  }
+
+  /**
+   * Generate audio using ElevenLabs and upload to S3 storage
+   * Returns a publicly accessible URL for Twilio to play
+   * @param {string} message - Text to convert to speech
+   * @param {object} agent - Agent configuration
+   * @param {string} language - Language code
+   * @returns {Promise<string>} Public URL to audio file
+   */
+  async generateElevenLabsAudio(message, agent = null, language = 'en') {
+    try {
+      // Get voice from agent config or use default for language
+      const voiceId = agent?.elevenlabs_voice || 
+                     this.elevenLabsService.getVoiceForLanguage(language, agent?.gender || 'female', 'us');
+      
+      logger.info(`Generating ElevenLabs audio: voice=${voiceId}, length=${message.length} chars`);
+      
+      // Generate audio with ElevenLabs
+      const audioBuffer = await this.elevenLabsService.textToSpeech(message, voiceId);
+      logger.info(`ElevenLabs audio generated: ${audioBuffer.length} bytes`);
+      
+      // Upload to S3 and get public URL
+      const audioUrl = await this.storageService.uploadAudio(audioBuffer, 'audio/mpeg', 3600);
+      logger.info(`Audio uploaded to S3: ${audioUrl}`);
+      
+      return audioUrl;
+      
+    } catch (error) {
+      logger.error('Error generating/uploading ElevenLabs audio:', error);
+      throw error;
+    }
   }
 
   /**

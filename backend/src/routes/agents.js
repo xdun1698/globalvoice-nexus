@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { getDatabase } = require('../config/database');
 const logger = require('../utils/logger');
+const ElevenLabsService = require('../services/elevenlabs');
+const vapiService = require('../services/vapi');
 
 // Get all agents for user
 router.get('/', async (req, res) => {
@@ -85,6 +87,18 @@ router.post('/', async (req, res) => {
       updated_at: new Date()
     }).returning('*');
 
+    // Sync to Vapi
+    try {
+      const vapiAssistant = await vapiService.syncAssistant(agent);
+      await db('agents')
+        .where({ id: agent.id })
+        .update({ vapi_assistant_id: vapiAssistant.id });
+      agent.vapi_assistant_id = vapiAssistant.id;
+      logger.info(`Agent synced to Vapi: ${vapiAssistant.id}`);
+    } catch (error) {
+      logger.warn('Failed to sync agent to Vapi:', error.message);
+    }
+
     logger.info(`Agent created: ${agent.id} by user ${req.user.id}`);
     res.status(201).json({ agent });
   } catch (error) {
@@ -103,6 +117,8 @@ router.put('/:id', async (req, res) => {
       greeting,
       language,
       voice,
+      elevenlabs_voice,
+      system_prompt,
       personality,
       intents,
       workflows,
@@ -118,6 +134,8 @@ router.put('/:id', async (req, res) => {
         greeting,
         language,
         voice,
+        elevenlabs_voice,
+        system_prompt,
         personality,
         intents: JSON.stringify(intents || []),
         workflows: JSON.stringify(workflows || []),
@@ -126,6 +144,20 @@ router.put('/:id', async (req, res) => {
         updated_at: new Date()
       })
       .returning('*');
+
+    // Sync to Vapi
+    try {
+      const vapiAssistant = await vapiService.syncAssistant(agent);
+      if (!agent.vapi_assistant_id) {
+        await db('agents')
+          .where({ id: agent.id })
+          .update({ vapi_assistant_id: vapiAssistant.id });
+        agent.vapi_assistant_id = vapiAssistant.id;
+      }
+      logger.info(`Agent synced to Vapi: ${vapiAssistant.id}`);
+    } catch (error) {
+      logger.warn('Failed to sync agent to Vapi:', error.message);
+    }
 
     if (!agent) {
       return res.status(404).json({ error: 'Agent not found' });
@@ -143,13 +175,29 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const db = getDatabase();
-    const deleted = await db('agents')
+    
+    // Get agent first to get vapi_assistant_id
+    const agent = await db('agents')
       .where({ id: req.params.id, user_id: req.user.id })
-      .delete();
+      .first();
 
-    if (!deleted) {
+    if (!agent) {
       return res.status(404).json({ error: 'Agent not found' });
     }
+
+    // Delete from Vapi if exists
+    if (agent.vapi_assistant_id) {
+      try {
+        await vapiService.deleteAssistant(agent.vapi_assistant_id);
+      } catch (error) {
+        logger.warn('Failed to delete from Vapi:', error.message);
+      }
+    }
+
+    // Delete from database
+    await db('agents')
+      .where({ id: req.params.id, user_id: req.user.id })
+      .delete();
 
     logger.info(`Agent deleted: ${req.params.id}`);
     res.json({ message: 'Agent deleted successfully' });
@@ -240,6 +288,36 @@ router.get('/:id/phone-numbers', async (req, res) => {
   } catch (error) {
     logger.error('Error fetching phone numbers:', error);
     res.status(500).json({ error: 'Failed to fetch phone numbers' });
+  }
+});
+
+// Get available ElevenLabs voices
+router.get('/voices/elevenlabs', async (req, res) => {
+  try {
+    const voiceLibrary = require('../data/elevenlabs-voices');
+    
+    // Get voices based on query parameters
+    const { rating, useCase, category } = req.query;
+    
+    let voices;
+    if (rating) {
+      voices = voiceLibrary.getByRating(parseInt(rating));
+    } else if (useCase) {
+      voices = voiceLibrary.getByUseCase(useCase);
+    } else if (category === 'collections') {
+      voices = voiceLibrary.getCollectionsVoices();
+    } else {
+      voices = voiceLibrary.getAllVoices();
+    }
+
+    res.json({ 
+      voices,
+      total: voices.length,
+      enabled: true
+    });
+  } catch (error) {
+    logger.error('Error fetching ElevenLabs voices:', error);
+    res.status(500).json({ error: 'Failed to fetch voices' });
   }
 });
 

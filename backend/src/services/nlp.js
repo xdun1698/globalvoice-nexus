@@ -115,8 +115,10 @@ class NLPService {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: text }
         ],
-        temperature: 0.7,
-        max_tokens: 150
+        temperature: 0.8, // Higher = more natural, conversational
+        max_tokens: 200,  // Allow longer, more complete responses
+        presence_penalty: 0.6, // Encourage diverse responses
+        frequency_penalty: 0.3 // Reduce repetition
       });
 
       const aiResponse = completion.choices[0].message.content;
