@@ -76,3 +76,7 @@ Thumbs.db
 
 # Local Netlify folder
 .netlify
+# Test files with secrets
+diagnose-s3.js
+test-elevenlabs*.js
+test-s3-upload.js
