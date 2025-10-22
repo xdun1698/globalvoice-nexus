@@ -221,10 +221,19 @@ class VapiService {
     }
 
     try {
+      // Get a phone number to call from (first available Vapi phone number)
+      const phoneNumbers = await this.listPhoneNumbers();
+      if (phoneNumbers.length === 0) {
+        throw new Error('No phone numbers available in Vapi. Please add a phone number first.');
+      }
+      
+      const fromPhoneNumber = phoneNumbers[0];
+      
       const response = await axios.post(
         `${this.baseUrl}/call`,
         {
           assistantId: assistantId,
+          phoneNumberId: fromPhoneNumber.id,
           customer: {
             number: phoneNumber,
             ...customerData
@@ -237,10 +246,13 @@ class VapiService {
           }
         }
       );
-      logger.info(`Initiated Vapi call: ${response.data.id}`);
+      logger.info(`Initiated Vapi call: ${response.data.id} from ${fromPhoneNumber.number} to ${phoneNumber}`);
       return response.data;
     } catch (error) {
       logger.error('Error making Vapi call:', error.response?.data || error.message);
+      if (error.response?.data) {
+        logger.error('Vapi error details:', JSON.stringify(error.response.data));
+      }
       throw error;
     }
   }
