@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Phone, Plus, Edit, Trash2, Link as LinkIcon, ExternalLink, CheckCircle, XCircle, RefreshCw, Download, Loader2 } from 'lucide-react';
+import { Phone, Plus, Edit, Trash2, Link as LinkIcon, ExternalLink, CheckCircle, XCircle, RefreshCw, Download, Loader2, AlertTriangle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../lib/axios';
 import VapiSyncButton from '../components/VapiSyncButton';
@@ -17,6 +17,7 @@ export default function PhoneNumbers() {
   const [selectedAgentId, setSelectedAgentId] = useState('');
   const [showSyncStatus, setShowSyncStatus] = useState(false);
   const [vapiAssistants, setVapiAssistants] = useState([]);
+  const [showOnlyVapi, setShowOnlyVapi] = useState(true); // Default to showing only Vapi numbers
 
   useEffect(() => {
     loadData();
@@ -143,12 +144,23 @@ export default function PhoneNumbers() {
     return agent ? agent.name : `Vapi Assistant (${vapiAssistantId.substring(0, 8)}...)`;
   };
 
+  const getFilteredNumbers = () => {
+    if (showOnlyVapi) {
+      return phoneNumbers.filter(p => p.vapi_phone_id); // Only show Vapi-synced numbers
+    }
+    return phoneNumbers;
+  };
+
   const getAvailableNumbers = () => {
-    return phoneNumbers.filter(p => !p.agent_id);
+    return getFilteredNumbers().filter(p => !p.agent_id);
   };
 
   const getAssignedNumbers = () => {
-    return phoneNumbers.filter(p => p.agent_id);
+    return getFilteredNumbers().filter(p => p.agent_id);
+  };
+
+  const getNonVapiNumbers = () => {
+    return phoneNumbers.filter(p => !p.vapi_phone_id);
   };
 
   return (
@@ -164,6 +176,14 @@ export default function PhoneNumbers() {
         </div>
         <div className="flex gap-3">
           <button 
+            onClick={() => setShowOnlyVapi(!showOnlyVapi)} 
+            className={`btn ${showOnlyVapi ? 'btn-primary' : 'btn-secondary'} flex items-center`}
+            title={showOnlyVapi ? 'Showing only Vapi numbers' : 'Showing all numbers'}
+          >
+            <CheckCircle className="h-5 w-5 mr-2" />
+            {showOnlyVapi ? 'Vapi Only' : 'All Numbers'}
+          </button>
+          <button 
             onClick={() => setShowSyncStatus(!showSyncStatus)} 
             className="btn btn-secondary flex items-center"
           >
@@ -178,12 +198,26 @@ export default function PhoneNumbers() {
             <RefreshCw className={`h-5 w-5 mr-2 ${syncing ? 'animate-spin' : ''}`} />
             Refresh from Vapi
           </button>
-          <button onClick={() => setShowAddModal(true)} className="btn btn-primary flex items-center">
-            <Plus className="h-5 w-5 mr-2" />
-            Add Phone Number
-          </button>
         </div>
       </div>
+
+      {/* Legacy Numbers Warning */}
+      {!showOnlyVapi && getNonVapiNumbers().length > 0 && (
+        <div className="card bg-yellow-50 border-yellow-200">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start flex-1">
+              <AlertTriangle className="h-6 w-6 text-yellow-600 mr-3 mt-1" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 mb-2">Legacy Numbers Detected</h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  Found {getNonVapiNumbers().length} phone number(s) not synced with Vapi. 
+                  These may be duplicates or legacy entries. Consider removing them to avoid confusion.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Sync Status Section */}
       {showSyncStatus && (
@@ -221,8 +255,15 @@ export default function PhoneNumbers() {
         <div className="card bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-purple-600">Total Numbers</p>
-              <p className="text-3xl font-bold text-purple-900 mt-1">{phoneNumbers.length}</p>
+              <p className="text-sm font-medium text-purple-600">
+                {showOnlyVapi ? 'Vapi Numbers' : 'Total Numbers'}
+              </p>
+              <p className="text-3xl font-bold text-purple-900 mt-1">{getFilteredNumbers().length}</p>
+              {!showOnlyVapi && phoneNumbers.length !== getFilteredNumbers().length && (
+                <p className="text-xs text-purple-600 mt-1">
+                  ({phoneNumbers.length} total including legacy)
+                </p>
+              )}
             </div>
             <div className="p-3 bg-purple-200 rounded-lg">
               <Phone className="h-8 w-8 text-purple-700" />
@@ -239,7 +280,10 @@ export default function PhoneNumbers() {
             <div className="flex-1">
               <h3 className="font-semibold text-gray-900 mb-2">Vapi Phone Numbers</h3>
               <p className="text-sm text-gray-600 mb-3">
-                Phone numbers automatically sync from Vapi on page load. Each number can be assigned to one agent.
+                {showOnlyVapi 
+                  ? 'Showing only phone numbers synced from Vapi. Use the "All Numbers" filter to see legacy numbers.'
+                  : 'Phone numbers automatically sync from Vapi on page load. Each number can be assigned to one agent.'
+                }
               </p>
               <div className="flex gap-3">
                 <a 
@@ -263,41 +307,64 @@ export default function PhoneNumbers() {
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
           <p className="mt-4 text-gray-600">Loading phone numbers...</p>
         </div>
-      ) : phoneNumbers.length === 0 ? (
+      ) : getFilteredNumbers().length === 0 ? (
         <div className="text-center py-12 card">
           <Phone className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No phone numbers yet</h3>
-          <p className="text-gray-600 mb-6">Import phone numbers from Vapi or add them manually</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            {showOnlyVapi ? 'No Vapi phone numbers yet' : 'No phone numbers yet'}
+          </h3>
+          <p className="text-gray-600 mb-6">
+            {showOnlyVapi 
+              ? 'Click "Refresh from Vapi" to import phone numbers from your Vapi dashboard'
+              : 'Import phone numbers from Vapi to get started'
+            }
+          </p>
           <div className="flex gap-3 justify-center">
-            <VapiSyncButton 
-              type="phone-numbers-from" 
-              onSyncComplete={() => loadData()}
-            />
-            <button onClick={() => setShowAddModal(true)} className="btn btn-secondary inline-flex items-center">
-              <Plus className="h-5 w-5 mr-2" />
-              Add Manually
+            <button 
+              onClick={autoSyncFromVapi}
+              disabled={syncing}
+              className="btn btn-primary inline-flex items-center"
+            >
+              <RefreshCw className={`h-5 w-5 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+              Refresh from Vapi
             </button>
+            {!showOnlyVapi && phoneNumbers.length > 0 && (
+              <button 
+                onClick={() => setShowOnlyVapi(true)} 
+                className="btn btn-secondary inline-flex items-center"
+              >
+                <CheckCircle className="h-5 w-5 mr-2" />
+                Show Vapi Only
+              </button>
+            )}
           </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {phoneNumbers.map(phone => (
-            <div key={phone.id} className="card hover:shadow-lg transition-shadow">
+          {getFilteredNumbers().map(phone => (
+            <div key={phone.id} className={`card hover:shadow-lg transition-shadow ${!phone.vapi_phone_id ? 'border-yellow-200 bg-yellow-50' : ''}`}>
               <div className="flex items-start justify-between mb-4">
                 <div className="p-3 bg-primary-50 rounded-lg">
                   <Phone className="h-6 w-6 text-primary-600" />
                 </div>
-                {phone.agent_id ? (
-                  <span className="badge badge-success flex items-center">
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    Assigned
-                  </span>
-                ) : (
-                  <span className="badge badge-warning flex items-center">
-                    <XCircle className="h-3 w-3 mr-1" />
-                    Unassigned
-                  </span>
-                )}
+                <div className="flex flex-col gap-1 items-end">
+                  {phone.agent_id ? (
+                    <span className="badge badge-success flex items-center">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Assigned
+                    </span>
+                  ) : (
+                    <span className="badge badge-warning flex items-center">
+                      <XCircle className="h-3 w-3 mr-1" />
+                      Unassigned
+                    </span>
+                  )}
+                  {!showOnlyVapi && !phone.vapi_phone_id && (
+                    <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">
+                      Legacy
+                    </span>
+                  )}
+                </div>
               </div>
 
               <h3 className="text-lg font-semibold text-gray-900 mb-2">{phone.number}</h3>
