@@ -35,7 +35,7 @@ class VapiService {
           systemPrompt: this.buildSystemPrompt(agent)
         },
         voice: {
-          provider: 'elevenlabs',
+          provider: '11labs',
           voiceId: agent.elevenlabs_voice || 'ErXwobaYiN019PkySvjV', // Antoni default
           stability: 0.35,
           similarityBoost: 0.75,
