@@ -3,8 +3,51 @@ import {
   Building2, Users, Database, Mail, Calendar,
   MessageSquare, FileText, Webhook, Settings
 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 export default function Integrations() {
+  // Handle CRM connection
+  const handleConnectCRM = (crmName) => {
+    toast.success(`${crmName} integration coming soon!`, {
+      icon: '🔗',
+      duration: 3000
+    });
+  };
+
+  // Handle other integration connection
+  const handleConnectIntegration = (integrationName) => {
+    toast.success(`${integrationName} integration coming soon!`, {
+      icon: '⚡',
+      duration: 3000
+    });
+  };
+
+  // Handle custom integration request
+  const handleRequestCustom = () => {
+    const subject = encodeURIComponent('Custom Integration Request');
+    const body = encodeURIComponent(`Hi GlobalVoice Team,
+
+I would like to request a custom integration for:
+
+Integration Name: 
+Business Need: 
+Expected Features: 
+
+Please contact me to discuss further.
+
+Thank you!`);
+    
+    window.location.href = `mailto:support@globalvoice.com?subject=${subject}&body=${body}`;
+  };
+
+  // Handle API documentation
+  const handleViewDocs = () => {
+    toast.info('API documentation coming soon!', {
+      icon: '📚',
+      duration: 3000
+    });
+    // Future: window.open('/api-docs', '_blank');
+  };
   // Top-rated CRM integrations
   const crmIntegrations = [
     {
@@ -124,11 +167,17 @@ export default function Integrations() {
               legacy system, or unique workflow, our team can create a seamless connection.
             </p>
             <div className="flex flex-wrap gap-3">
-              <button className="btn btn-primary flex items-center">
+              <button 
+                onClick={handleRequestCustom}
+                className="btn btn-primary flex items-center"
+              >
                 <Mail className="h-4 w-4 mr-2" />
                 Request Custom Integration
               </button>
-              <button className="btn btn-secondary flex items-center">
+              <button 
+                onClick={handleViewDocs}
+                className="btn btn-secondary flex items-center"
+              >
                 <FileText className="h-4 w-4 mr-2" />
                 View API Documentation
               </button>
@@ -176,7 +225,10 @@ export default function Integrations() {
               
               <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                 <span className="text-xs text-gray-500">{crm.pricing}</span>
-                <button className="btn btn-sm btn-primary flex items-center">
+                <button 
+                  onClick={() => handleConnectCRM(crm.name)}
+                  className="btn btn-sm btn-primary flex items-center"
+                >
                   <Plus className="h-4 w-4 mr-1" />
                   Connect
                 </button>
@@ -206,7 +258,10 @@ export default function Integrations() {
                 </div>
                 <div>
                   {integration.status === 'available' ? (
-                    <button className="btn btn-sm btn-secondary">
+                    <button 
+                      onClick={() => handleConnectIntegration(integration.name)}
+                      className="btn btn-sm btn-secondary"
+                    >
                       Connect
                     </button>
                   ) : (
