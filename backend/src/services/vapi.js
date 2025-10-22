@@ -246,6 +246,13 @@ class VapiService {
   }
 
   /**
+   * Make an outbound call via Vapi (alias for makeCall)
+   */
+  async makeOutboundCall({ assistantId, phoneNumber, name, customerData = {} }) {
+    return this.makeCall(assistantId, phoneNumber, { name, ...customerData });
+  }
+
+  /**
    * Build system prompt from agent configuration
    */
   buildSystemPrompt(agent) {
