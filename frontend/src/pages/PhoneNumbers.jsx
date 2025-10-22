@@ -46,15 +46,26 @@ export default function PhoneNumbers() {
       const syncRes = await api.post('/api/vapi-sync/phone-numbers/from-vapi');
       
       if (syncRes.data.results) {
-        const { imported, updated } = syncRes.data.results;
+        const { imported, updated, errors } = syncRes.data.results;
+        
+        // Show errors if any
+        if (errors && errors.length > 0) {
+          console.error('Sync errors:', errors);
+          toast.error(`Sync completed with ${errors.length} error(s). Check console for details.`);
+        }
+        
+        // Show success if numbers were imported/updated
         if (imported > 0 || updated > 0) {
           toast.success(`Synced ${imported + updated} phone numbers from Vapi`);
           loadData();
+        } else if (!errors || errors.length === 0) {
+          // Only show "no changes" if there were no errors
+          toast.info('Phone numbers are already up to date');
         }
       }
     } catch (error) {
       console.error('Auto-sync failed:', error);
-      // Don't show error toast for auto-sync failures
+      toast.error(error.response?.data?.message || 'Failed to sync from Vapi. Check console for details.');
     } finally {
       setSyncing(false);
     }

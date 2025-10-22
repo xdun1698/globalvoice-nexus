@@ -5,12 +5,12 @@ const logger = require('../utils/logger');
 const phoneService = require('../services/phone');
 const vapiService = require('../services/vapi');
 
-// Get all phone numbers for user
+// Get all phone numbers (organization-wide for CRM)
+// Note: In a multi-tenant CRM, phone numbers are shared across the organization
 router.get('/', async (req, res) => {
   try {
     const db = getDatabase();
     const phoneNumbers = await db('phone_numbers')
-      .where({ user_id: req.user.id })
       .orderBy('created_at', 'desc');
 
     res.json({ phoneNumbers });
@@ -25,7 +25,7 @@ router.get('/:id', async (req, res) => {
   try {
     const db = getDatabase();
     const phoneNumber = await db('phone_numbers')
-      .where({ id: req.params.id, user_id: req.user.id })
+      .where({ id: req.params.id })
       .first();
 
     if (!phoneNumber) {
