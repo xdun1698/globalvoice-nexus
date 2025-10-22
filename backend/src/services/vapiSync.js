@@ -81,7 +81,6 @@ class VapiSyncService {
               country_code: vapiNumber.number.substring(0, 2),
               vapi_phone_id: vapiNumber.id,
               vapi_assistant_id: vapiNumber.assistantId,
-              status: 'active',
               created_at: new Date()
             });
             
