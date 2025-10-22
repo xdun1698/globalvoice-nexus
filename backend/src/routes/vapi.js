@@ -3,7 +3,7 @@ const router = express.Router();
 const { getDatabase } = require('../config/database');
 const logger = require('../utils/logger');
 const vapiService = require('../services/vapi');
-const { authenticate } = require('../middleware/auth');
+const { authenticate } = require('../middleware/authenticate');
 
 /**
  * Vapi.ai Webhook Handler
