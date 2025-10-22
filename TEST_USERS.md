@@ -33,6 +33,7 @@ This document lists all test users available for the GlobalVoice Nexus platform 
 - **Access:** Full premium features
 - **Created:** October 21, 2025
 - **Updated:** October 21, 2025
+- **Pre-configured Agents:** 2 agents (Will Collection, Shannan Collection)
 
 **Use Cases:**
 - Premium sales demos and presentations
@@ -42,6 +43,10 @@ This document lists all test users available for the GlobalVoice Nexus platform 
 - Feature demonstrations
 - Onboarding walkthroughs
 - Training sessions
+
+**Pre-configured Agents:**
+1. **Will Collection** - Collections agent with professional persona
+2. **Shannan Collection** - Collections agent variant
 
 **Typical Demo Flow:**
 1. Login as Courtney
