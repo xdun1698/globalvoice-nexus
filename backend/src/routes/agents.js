@@ -321,6 +321,30 @@ router.get('/voices/elevenlabs', async (req, res) => {
   }
 });
 
+// Helper function to format phone number to E.164 format
+function formatPhoneNumber(phone) {
+  // Remove all non-digits
+  const digits = phone.replace(/\D/g, '');
+  
+  // Add +1 if not present (US numbers)
+  if (digits.length === 10) {
+    return `+1${digits}`;
+  } else if (digits.length === 11 && digits.startsWith('1')) {
+    return `+${digits}`;
+  } else if (phone.startsWith('+')) {
+    return phone.replace(/\D/g, '').replace(/^/, '+');
+  }
+  
+  return `+${digits}`; // Default: add + prefix
+}
+
+// Helper function to validate phone number
+function isValidPhoneNumber(phone) {
+  const digits = phone.replace(/\D/g, '');
+  // US/Canada: 10 digits or 11 digits starting with 1
+  return digits.length === 10 || (digits.length === 11 && digits.startsWith('1'));
+}
+
 // Test call endpoint - Make a test call to verify agent
 router.post('/:id/test-call', async (req, res) => {
   try {
@@ -329,6 +353,18 @@ router.post('/:id/test-call', async (req, res) => {
     if (!phoneNumber) {
       return res.status(400).json({ error: 'Phone number is required' });
     }
+
+    // Validate phone number format
+    if (!isValidPhoneNumber(phoneNumber)) {
+      return res.status(400).json({ 
+        error: 'Invalid phone number format',
+        message: 'Please enter a valid US/Canada phone number (10 or 11 digits)'
+      });
+    }
+
+    // Format phone number to E.164 format
+    const formattedPhone = formatPhoneNumber(phoneNumber);
+    logger.info(`Formatted phone number: ${phoneNumber} → ${formattedPhone}`);
 
     const db = getDatabase();
     const agent = await db('agents')
@@ -347,26 +383,38 @@ router.post('/:id/test-call', async (req, res) => {
     }
 
     // Make outbound call via Vapi
-    logger.info(`Making test call for agent ${agent.id} to ${phoneNumber}`);
+    logger.info(`Making test call for agent ${agent.id} (${agent.name}) to ${formattedPhone}`);
+    logger.info(`Using Vapi assistant ID: ${agent.vapi_assistant_id}`);
     
     const callResult = await vapiService.makeOutboundCall({
       assistantId: agent.vapi_assistant_id,
-      phoneNumber: phoneNumber,
+      phoneNumber: formattedPhone,
       name: `Test call for ${agent.name}`
     });
 
-    logger.info('Test call initiated:', callResult);
+    logger.info('Test call initiated successfully:', {
+      callId: callResult.id,
+      status: callResult.status,
+      to: formattedPhone
+    });
 
     res.json({ 
       success: true,
       message: 'Test call initiated successfully',
-      callId: callResult.id
+      callId: callResult.id,
+      phoneNumber: formattedPhone
     });
   } catch (error) {
-    logger.error('Error making test call:', error);
+    logger.error('Error making test call:', {
+      message: error.message,
+      stack: error.stack,
+      response: error.response?.data
+    });
+    
     res.status(500).json({ 
       error: 'Failed to initiate test call',
-      message: error.message 
+      message: error.message,
+      details: error.response?.data?.message || 'Please check backend logs for details'
     });
   }
 });

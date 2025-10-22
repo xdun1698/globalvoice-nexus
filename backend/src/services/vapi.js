@@ -222,23 +222,31 @@ class VapiService {
 
     try {
       // Get a phone number to call from (first available Vapi phone number)
+      logger.info('Fetching available Vapi phone numbers...');
       const phoneNumbers = await this.getPhoneNumbers();
+      
       if (phoneNumbers.length === 0) {
-        throw new Error('No phone numbers available in Vapi. Please add a phone number first.');
+        logger.error('No phone numbers available in Vapi');
+        throw new Error('No phone numbers available in Vapi. Please add a phone number in the Vapi dashboard first.');
       }
       
       const fromPhoneNumber = phoneNumbers[0];
+      logger.info(`Using phone number: ${fromPhoneNumber.number} (ID: ${fromPhoneNumber.id})`);
+      
+      const payload = {
+        assistantId: assistantId,
+        phoneNumberId: fromPhoneNumber.id,
+        customer: {
+          number: phoneNumber,
+          ...customerData
+        }
+      };
+      
+      logger.info('Making Vapi call with payload:', JSON.stringify(payload, null, 2));
       
       const response = await axios.post(
         `${this.baseUrl}/call`,
-        {
-          assistantId: assistantId,
-          phoneNumberId: fromPhoneNumber.id,
-          customer: {
-            number: phoneNumber,
-            ...customerData
-          }
-        },
+        payload,
         {
           headers: {
             'Authorization': `Bearer ${this.apiKey}`,
@@ -246,14 +254,35 @@ class VapiService {
           }
         }
       );
-      logger.info(`Initiated Vapi call: ${response.data.id} from ${fromPhoneNumber.number} to ${phoneNumber}`);
+      
+      logger.info(`✅ Vapi call initiated successfully:`, {
+        callId: response.data.id,
+        from: fromPhoneNumber.number,
+        to: phoneNumber,
+        status: response.data.status
+      });
+      
       return response.data;
     } catch (error) {
-      logger.error('Error making Vapi call:', error.response?.data || error.message);
-      if (error.response?.data) {
-        logger.error('Vapi error details:', JSON.stringify(error.response.data));
+      logger.error('❌ Vapi call failed:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url,
+        method: error.config?.method
+      });
+      
+      // Throw user-friendly error
+      if (error.response?.data?.message) {
+        throw new Error(`Vapi API error: ${error.response.data.message}`);
+      } else if (error.response?.status === 401) {
+        throw new Error('Vapi authentication failed. Please check API keys.');
+      } else if (error.response?.status === 404) {
+        throw new Error('Vapi resource not found. Please check assistant ID and phone number ID.');
+      } else {
+        throw new Error(`Failed to initiate call: ${error.message}`);
       }
-      throw error;
     }
   }
 
