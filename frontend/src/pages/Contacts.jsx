@@ -1,4 +1,4 @@
-import { Plus, Search, Upload, AlertCircle, Mail, Phone, MapPin, Tag } from 'lucide-react';
+import { Plus, Search, Upload, AlertCircle, Mail, Phone, MapPin, Tag, Globe, Bot } from 'lucide-react';
 
 export default function Contacts() {
   // Sample contact data for demonstration
@@ -9,6 +9,9 @@ export default function Contacts() {
       email: 'john.anderson@example.com',
       phone: '+1 (555) 123-4567',
       company: 'Acme Corporation',
+      country: 'United States',
+      language: 'English',
+      assignedAgent: 'Will - Collections',
       status: 'Active',
       tags: ['Customer', 'VIP'],
       lastContact: '2 days ago'
@@ -19,6 +22,9 @@ export default function Contacts() {
       email: 'sarah.m@techstartup.io',
       phone: '+1 (555) 234-5678',
       company: 'Tech Startup Inc',
+      country: 'Spain',
+      language: 'Spanish',
+      assignedAgent: 'Sales Agent',
       status: 'Active',
       tags: ['Lead', 'Hot'],
       lastContact: '5 days ago'
@@ -29,6 +35,9 @@ export default function Contacts() {
       email: 'mchen@globalcorp.com',
       phone: '+1 (555) 345-6789',
       company: 'Global Corp',
+      country: 'China',
+      language: 'Chinese',
+      assignedAgent: 'Customer Support',
       status: 'Pending',
       tags: ['Prospect'],
       lastContact: '1 week ago'
@@ -39,6 +48,9 @@ export default function Contacts() {
       email: 'emily.r@consulting.com',
       phone: '+1 (555) 456-7890',
       company: 'Rodriguez Consulting',
+      country: 'Mexico',
+      language: 'Spanish',
+      assignedAgent: 'Customer Support',
       status: 'Active',
       tags: ['Customer', 'Partner'],
       lastContact: '3 days ago'
@@ -49,6 +61,9 @@ export default function Contacts() {
       email: 'dthompson@enterprise.net',
       phone: '+1 (555) 567-8901',
       company: 'Enterprise Solutions',
+      country: 'United States',
+      language: 'English',
+      assignedAgent: 'Will - Collections',
       status: 'Active',
       tags: ['Customer'],
       lastContact: '1 day ago'
@@ -107,6 +122,12 @@ export default function Contacts() {
                   Company
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Country & Language
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Assigned Agent
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Tags
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -148,6 +169,23 @@ export default function Contacts() {
                     <div className="flex items-center text-sm text-gray-900">
                       <MapPin className="h-4 w-4 text-gray-400 mr-2" />
                       {contact.company}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="space-y-1">
+                      <div className="flex items-center text-sm text-gray-900">
+                        <Globe className="h-4 w-4 text-gray-400 mr-2" />
+                        {contact.country}
+                      </div>
+                      <div className="text-xs text-gray-500 ml-6">
+                        {contact.language}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center text-sm text-gray-900">
+                      <Bot className="h-4 w-4 text-primary-600 mr-2" />
+                      {contact.assignedAgent}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
