@@ -30,6 +30,11 @@ export default function PhoneNumbers() {
         api.get('/api/phone-numbers'),
         api.get('/api/agents')
       ]);
+      console.log('📞 Phone numbers loaded:', phonesRes.data.phoneNumbers);
+      console.log('📊 Total numbers:', phonesRes.data.phoneNumbers.length);
+      console.log('✅ Vapi numbers:', phonesRes.data.phoneNumbers.filter(p => p.vapi_phone_id).length);
+      console.log('❌ Legacy numbers:', phonesRes.data.phoneNumbers.filter(p => !p.vapi_phone_id).length);
+      
       setPhoneNumbers(phonesRes.data.phoneNumbers || []);
       setAgents(agentsRes.data.agents || []);
     } catch (error) {
@@ -145,10 +150,14 @@ export default function PhoneNumbers() {
   };
 
   const getFilteredNumbers = () => {
-    if (showOnlyVapi) {
-      return phoneNumbers.filter(p => p.vapi_phone_id); // Only show Vapi-synced numbers
-    }
-    return phoneNumbers;
+    const filtered = showOnlyVapi 
+      ? phoneNumbers.filter(p => p.vapi_phone_id) 
+      : phoneNumbers;
+    
+    console.log(`🔍 Filter mode: ${showOnlyVapi ? 'Vapi Only' : 'All Numbers'}`);
+    console.log(`📋 Filtered result: ${filtered.length} numbers`);
+    
+    return filtered;
   };
 
   const getAvailableNumbers = () => {
