@@ -82,17 +82,105 @@ export default function AgentsSimplified() {
   const loadVoices = async () => {
     setLoadingVoices(true);
     try {
-      const response = await api.get('/api/agents/voices/elevenlabs');
-      setVoices(response.data.voices || []);
+      // Use international test voices as placeholders
+      setVoices([
+        // 🇺🇸 North America
+        { voice_id: 'test_antoni', name: '🇺🇸 Antoni (Male, US) - Professional, Clear' },
+        { voice_id: 'test_rachel', name: '🇺🇸 Rachel (Female, US) - Warm, Friendly' },
+        { voice_id: 'test_adam', name: '🇺🇸 Adam (Male, US) - Deep, Authoritative' },
+        { voice_id: 'test_bella', name: '🇺🇸 Bella (Female, US) - Soft, Empathetic' },
+        { voice_id: 'test_josh', name: '🇺🇸 Josh (Male, US) - Energetic, Young' },
+        { voice_id: 'test_domi', name: '🇺🇸 Domi (Female, US) - Confident, Leadership' },
+        { voice_id: 'test_grace', name: '🇺🇸 Grace (Female, US Southern) - Warm, Hospitality' },
+        
+        // 🇬🇧 United Kingdom
+        { voice_id: 'test_lily', name: '🇬🇧 Lily (Female, UK) - Elegant, Professional' },
+        { voice_id: 'test_daniel', name: '🇬🇧 Daniel (Male, UK) - Refined, Corporate' },
+        { voice_id: 'test_charlotte', name: '🇬🇧 Charlotte (Female, UK) - Sophisticated, Clear' },
+        { voice_id: 'test_george', name: '🇬🇧 George (Male, UK) - Distinguished, Formal' },
+        { voice_id: 'test_alice', name: '🇬🇧 Alice (Female, UK) - Friendly, Approachable' },
+        
+        // 🇦🇺 Australia
+        { voice_id: 'test_james', name: '🇦🇺 James (Male, Australian) - Casual, Friendly' },
+        { voice_id: 'test_nicole', name: '🇦🇺 Nicole (Female, Australian) - Bright, Energetic' },
+        { voice_id: 'test_jack', name: '🇦🇺 Jack (Male, Australian) - Laid-back, Approachable' },
+        { voice_id: 'test_emma', name: '🇦🇺 Emma (Female, Australian) - Warm, Professional' },
+        
+        // 🇮🇳 India
+        { voice_id: 'test_priya', name: '🇮🇳 Priya (Female, Indian) - Clear, Professional' },
+        { voice_id: 'test_raj', name: '🇮🇳 Raj (Male, Indian) - Articulate, Technical' },
+        { voice_id: 'test_ananya', name: '🇮🇳 Ananya (Female, Indian) - Friendly, Support' },
+        { voice_id: 'test_arjun', name: '🇮🇳 Arjun (Male, Indian) - Confident, Sales' },
+        
+        // 🇪🇸 Spain
+        { voice_id: 'test_carmen', name: '🇪🇸 Carmen (Female, Spanish) - Warm, Expressive' },
+        { voice_id: 'test_diego', name: '🇪🇸 Diego (Male, Spanish) - Professional, Clear' },
+        { voice_id: 'test_lucia', name: '🇪🇸 Lucía (Female, Spanish) - Friendly, Energetic' },
+        
+        // 🇲🇽 Mexico
+        { voice_id: 'test_maria', name: '🇲🇽 María (Female, Mexican) - Warm, Friendly' },
+        { voice_id: 'test_carlos', name: '🇲🇽 Carlos (Male, Mexican) - Professional, Clear' },
+        { voice_id: 'test_sofia', name: '🇲🇽 Sofía (Female, Mexican) - Empathetic, Support' },
+        
+        // 🇫🇷 France
+        { voice_id: 'test_amelie', name: '🇫🇷 Amélie (Female, French) - Elegant, Sophisticated' },
+        { voice_id: 'test_pierre', name: '🇫🇷 Pierre (Male, French) - Professional, Refined' },
+        { voice_id: 'test_claire', name: '🇫🇷 Claire (Female, French) - Warm, Friendly' },
+        
+        // 🇩🇪 Germany
+        { voice_id: 'test_anna', name: '🇩🇪 Anna (Female, German) - Clear, Professional' },
+        { voice_id: 'test_hans', name: '🇩🇪 Hans (Male, German) - Authoritative, Technical' },
+        { voice_id: 'test_lena', name: '🇩🇪 Lena (Female, German) - Friendly, Approachable' },
+        
+        // 🇮🇹 Italy
+        { voice_id: 'test_giulia', name: '🇮🇹 Giulia (Female, Italian) - Warm, Expressive' },
+        { voice_id: 'test_marco', name: '🇮🇹 Marco (Male, Italian) - Confident, Professional' },
+        { voice_id: 'test_francesca', name: '🇮🇹 Francesca (Female, Italian) - Elegant, Friendly' },
+        
+        // 🇧🇷 Brazil
+        { voice_id: 'test_isabela', name: '🇧🇷 Isabela (Female, Brazilian) - Warm, Energetic' },
+        { voice_id: 'test_gabriel', name: '🇧🇷 Gabriel (Male, Brazilian) - Friendly, Professional' },
+        { voice_id: 'test_camila', name: '🇧🇷 Camila (Female, Brazilian) - Bright, Approachable' },
+        
+        // 🇯🇵 Japan
+        { voice_id: 'test_yuki', name: '🇯🇵 Yuki (Female, Japanese) - Polite, Professional' },
+        { voice_id: 'test_takeshi', name: '🇯🇵 Takeshi (Male, Japanese) - Formal, Respectful' },
+        { voice_id: 'test_sakura', name: '🇯🇵 Sakura (Female, Japanese) - Gentle, Friendly' },
+        
+        // 🇰🇷 South Korea
+        { voice_id: 'test_jisoo', name: '🇰🇷 Jisoo (Female, Korean) - Professional, Clear' },
+        { voice_id: 'test_minho', name: '🇰🇷 Minho (Male, Korean) - Confident, Technical' },
+        { voice_id: 'test_soyeon', name: '🇰🇷 Soyeon (Female, Korean) - Friendly, Support' },
+        
+        // 🇨🇳 China
+        { voice_id: 'test_mei', name: '🇨🇳 Mei (Female, Mandarin) - Professional, Clear' },
+        { voice_id: 'test_wei', name: '🇨🇳 Wei (Male, Mandarin) - Authoritative, Formal' },
+        { voice_id: 'test_ling', name: '🇨🇳 Ling (Female, Mandarin) - Warm, Friendly' },
+        
+        // 🇦🇪 UAE
+        { voice_id: 'test_fatima', name: '🇦🇪 Fatima (Female, Arabic) - Professional, Elegant' },
+        { voice_id: 'test_omar', name: '🇦🇪 Omar (Male, Arabic) - Confident, Clear' },
+        { voice_id: 'test_layla', name: '🇦🇪 Layla (Female, Arabic) - Warm, Friendly' },
+        
+        // 🇷🇺 Russia
+        { voice_id: 'test_natasha', name: '🇷🇺 Natasha (Female, Russian) - Professional, Clear' },
+        { voice_id: 'test_dmitri', name: '🇷🇺 Dmitri (Male, Russian) - Deep, Authoritative' },
+        { voice_id: 'test_olga', name: '🇷🇺 Olga (Female, Russian) - Warm, Approachable' },
+        
+        // 🇿🇦 South Africa
+        { voice_id: 'test_zara', name: '🇿🇦 Zara (Female, South African) - Friendly, Clear' },
+        { voice_id: 'test_liam', name: '🇿🇦 Liam (Male, South African) - Professional, Warm' },
+        
+        // 🇳🇱 Netherlands
+        { voice_id: 'test_eva', name: '🇳🇱 Eva (Female, Dutch) - Clear, Professional' },
+        { voice_id: 'test_lars', name: '🇳🇱 Lars (Male, Dutch) - Friendly, Direct' },
+        
+        // 🇸🇪 Sweden
+        { voice_id: 'test_astrid', name: '🇸🇪 Astrid (Female, Swedish) - Professional, Clear' },
+        { voice_id: 'test_erik', name: '🇸🇪 Erik (Male, Swedish) - Calm, Technical' },
+      ]);
     } catch (error) {
       console.error('Failed to load voices:', error);
-      // Fallback voices if API fails
-      setVoices([
-        { voice_id: 'antoni', name: 'Antoni (Professional Male)' },
-        { voice_id: 'rachel', name: 'Rachel (Professional Female)' },
-        { voice_id: 'josh', name: 'Josh (Confident Male)' },
-        { voice_id: 'bella', name: 'Bella (Friendly Female)' },
-      ]);
     } finally {
       setLoadingVoices(false);
     }
@@ -100,7 +188,7 @@ export default function AgentsSimplified() {
 
   const openCreateModal = () => {
     setAgentName('');
-    setSelectedVoice('antoni');
+    setSelectedVoice('test_antoni');
     setShowCreateModal(true);
   };
 
