@@ -24,19 +24,21 @@ This document lists all test users available for the GlobalVoice Nexus platform 
 
 ---
 
-## 🎯 Prospect User
+## 🎯 MVP User
 
-### **Courtney - Prospect Account**
-- **Email:** `courtney@prospect.com`
-- **Password:** `Prospect123!`
-- **Name:** Courtney
-- **Type:** Prospect
-- **Purpose:** Demo account for sales presentations and prospect trials
+### **2. Courtney (MVP)**
+- **Email:** courtney@mvp.com
+- **Password:** mvptexas321!
+- **Purpose:** Premium demos & MVP trials
+- **Access:** Full premium features
 - **Created:** October 21, 2025
+- **Updated:** October 21, 2025
 
 **Use Cases:**
-- Sales demos and presentations
-- Prospect trial accounts
+- Premium sales demos and presentations
+- MVP trial accounts
+- High-value prospect demonstrations
+- Executive-level presentations
 - Feature demonstrations
 - Onboarding walkthroughs
 - Training sessions
@@ -85,12 +87,14 @@ Or modify the script to create different users with different roles.
 - System configuration
 - All CRUD operations
 
-### **Prospect**
-- Limited trial access
-- Can create agents (limited)
-- Can view analytics
-- Cannot manage billing
-- Cannot access admin features
+### **MVP (Most Valuable Player)**
+- Premium trial access
+- Full feature access
+- Can create unlimited agents
+- Can view all analytics
+- Priority support
+- Extended trial period
+- White-label capabilities
 
 ### **Standard User** (Future)
 - Full feature access
@@ -156,9 +160,9 @@ Or modify the script to create different users with different roles.
 
 ### **For Sales Demos:**
 ```bash
-# Use Courtney account
-Email: courtney@prospect.com
-Password: Prospect123!
+# Use Courtney MVP account
+Email: courtney@mvp.com
+Password: mvptexas321!
 ```
 
 ### **For Development:**
