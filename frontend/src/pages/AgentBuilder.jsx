@@ -266,9 +266,9 @@ export default function AgentBuilder() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 <Mic className="inline w-4 h-4 mr-1" />
-                Voice Selection (International Test Voices)
+                Voice Selection
               </label>
-              <select {...register('elevenlabs_voice')} className="input" disabled>
+              <select {...register('elevenlabs_voice')} className="input">
                 <optgroup label="🇺🇸 NORTH AMERICA - Premium">
                   <option value="test_antoni">Antoni (Male, US) - Professional, Clear</option>
                   <option value="test_rachel">Rachel (Female, US) - Warm, Friendly</option>
@@ -382,10 +382,10 @@ export default function AgentBuilder() {
                   <option value="test_erik">Erik (Male, Swedish) - Calm, Technical</option>
                 </optgroup>
               </select>
-              <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                <p className="text-sm text-amber-800">
-                  <span className="font-semibold">🌍 International Test Voices</span> - These are placeholder voices for demonstration. 
-                  Voice selection is currently disabled. Contact support to enable premium international voices for your account.
+              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <span className="font-semibold">🌍 International Voices Available</span> - Select a voice for your agent from 60+ options across 18 countries. 
+                  These are test voices for demonstration purposes.
                 </p>
               </div>
             </div>
