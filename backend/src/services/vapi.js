@@ -1,6 +1,63 @@
 const axios = require('axios');
 const logger = require('../utils/logger');
 
+// Map test voice IDs to real ElevenLabs voice IDs
+const VOICE_ID_MAP = {
+  // 🇺🇸 North America
+  'test_antoni': 'ErXwobaYiN019PkySvjV',
+  'test_rachel': '21m00Tcm4TlvDq8ikWAM',
+  'test_adam': 'pNInz6obpgDQGcFmaJgB',
+  'test_bella': 'EXAVITQu4vr4xnSDxMaL',
+  'test_josh': 'TxGEqnHWrfWFTfGW9XjX',
+  'test_domi': 'AZnzlk1XvdvUeBnXmlld',
+  'test_grace': 'oWAxZDx7w5VEj9dCyTzz',
+  
+  // 🇬🇧 United Kingdom
+  'test_lily': 'pFZP5JQG7iQjIQuC4Bku',
+  'test_daniel': 'onwK4e9ZLuTAKqWW03F9',
+  'test_charlotte': 'XB0fDUnXU5powFXDhCwa',
+  'test_george': 'JBFqnCBsd6RMkjVDRZzb',
+  'test_alice': 'Xb7hH8MSUJpSbSDYk0k2',
+  
+  // 🇦🇺 Australia
+  'test_james': 'ZQe5CZNOzWyzPSCn5a3c',
+  'test_nicole': 'piTKgcLEGmPE4e6mEKli',
+  'test_jack': 'CwhRBWXzGAHq8TQ4Fs17',
+  'test_emma': 'ThT5KcBeYPX3keUQqHPh',
+  
+  // 🇮🇳 India
+  'test_priya': 'yoZ06aMxZJJ28mfd3POQ',
+  'test_raj': 'VR6AewLTigWG4xSOukaG',
+  'test_ananya': 'MF3mGyEYCl7XYWbV9V6O',
+  'test_arjun': 'N2lVS1w4EtoT3dr4eOWO',
+  
+  // Default fallback
+  'default': 'ErXwobaYiN019PkySvjV'
+};
+
+/**
+ * Convert test voice ID to real ElevenLabs voice ID
+ */
+function getRealVoiceId(voiceId) {
+  if (!voiceId) return VOICE_ID_MAP.default;
+  
+  // If it's already a real ID (doesn't start with 'test_'), return as-is
+  if (!voiceId.startsWith('test_')) {
+    return voiceId;
+  }
+  
+  // Map test ID to real ID
+  const realId = VOICE_ID_MAP[voiceId];
+  
+  if (!realId) {
+    logger.warn(`No mapping found for voice ID: ${voiceId}, using default`);
+    return VOICE_ID_MAP.default;
+  }
+  
+  logger.info(`Mapped voice ID: ${voiceId} → ${realId}`);
+  return realId;
+}
+
 /**
  * Vapi Service - Abstraction layer for Vapi.ai API
  * Makes it easy to swap Vapi for another provider later
@@ -36,7 +93,7 @@ class VapiService {
         },
         voice: {
           provider: '11labs',
-          voiceId: agent.elevenlabs_voice || 'ErXwobaYiN019PkySvjV', // Antoni default
+          voiceId: getRealVoiceId(agent.elevenlabs_voice),
           stability: 0.35,
           similarityBoost: 0.75,
           style: 0.3
