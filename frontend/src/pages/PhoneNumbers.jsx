@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Phone, Plus, Edit, Trash2, Link as LinkIcon, ExternalLink, CheckCircle, XCircle, RefreshCw, Download } from 'lucide-react';
+import { Phone, Plus, Edit, Trash2, Link as LinkIcon, ExternalLink, CheckCircle, XCircle, RefreshCw, Download, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../lib/axios';
 import VapiSyncButton from '../components/VapiSyncButton';
@@ -9,15 +9,18 @@ export default function PhoneNumbers() {
   const [phoneNumbers, setPhoneNumbers] = useState([]);
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedPhone, setSelectedPhone] = useState(null);
   const [newPhone, setNewPhone] = useState('');
   const [selectedAgentId, setSelectedAgentId] = useState('');
   const [showSyncStatus, setShowSyncStatus] = useState(false);
+  const [vapiAssistants, setVapiAssistants] = useState([]);
 
   useEffect(() => {
     loadData();
+    autoSyncFromVapi();
   }, []);
 
   const loadData = async () => {
@@ -33,6 +36,27 @@ export default function PhoneNumbers() {
       toast.error('Failed to load phone numbers');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const autoSyncFromVapi = async () => {
+    try {
+      setSyncing(true);
+      // Sync phone numbers from Vapi
+      const syncRes = await api.post('/api/vapi-sync/phone-numbers/from-vapi');
+      
+      if (syncRes.data.results) {
+        const { imported, updated } = syncRes.data.results;
+        if (imported > 0 || updated > 0) {
+          toast.success(`Synced ${imported + updated} phone numbers from Vapi`);
+          loadData();
+        }
+      }
+    } catch (error) {
+      console.error('Auto-sync failed:', error);
+      // Don't show error toast for auto-sync failures
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -102,13 +126,30 @@ export default function PhoneNumbers() {
     return agent ? agent.name : 'Unknown Agent';
   };
 
+  const getVapiAssistantName = (vapiAssistantId) => {
+    if (!vapiAssistantId) return null;
+    const agent = agents.find(a => a.vapi_assistant_id === vapiAssistantId);
+    return agent ? agent.name : `Vapi Assistant (${vapiAssistantId.substring(0, 8)}...)`;
+  };
+
+  const getAvailableNumbers = () => {
+    return phoneNumbers.filter(p => !p.agent_id);
+  };
+
+  const getAssignedNumbers = () => {
+    return phoneNumbers.filter(p => p.agent_id);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Phone Numbers</h1>
-          <p className="mt-2 text-gray-600">Manage phone numbers from Vapi and assign them to agents</p>
+          <p className="mt-2 text-gray-600">
+            Manage phone numbers from Vapi and assign them to agents
+            {syncing && <span className="ml-2 text-blue-600 inline-flex items-center"><Loader2 className="h-4 w-4 mr-1 animate-spin" />Syncing...</span>}
+          </p>
         </div>
         <div className="flex gap-3">
           <button 
@@ -117,6 +158,14 @@ export default function PhoneNumbers() {
           >
             <RefreshCw className="h-5 w-5 mr-2" />
             Sync Status
+          </button>
+          <button 
+            onClick={autoSyncFromVapi} 
+            disabled={syncing}
+            className="btn btn-secondary flex items-center"
+          >
+            <RefreshCw className={`h-5 w-5 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+            Refresh from Vapi
           </button>
           <button onClick={() => setShowAddModal(true)} className="btn btn-primary flex items-center">
             <Plus className="h-5 w-5 mr-2" />
@@ -132,6 +181,45 @@ export default function PhoneNumbers() {
         </div>
       )}
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="card bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-green-600">Available Numbers</p>
+              <p className="text-3xl font-bold text-green-900 mt-1">{getAvailableNumbers().length}</p>
+            </div>
+            <div className="p-3 bg-green-200 rounded-lg">
+              <CheckCircle className="h-8 w-8 text-green-700" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="card bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-blue-600">Assigned Numbers</p>
+              <p className="text-3xl font-bold text-blue-900 mt-1">{getAssignedNumbers().length}</p>
+            </div>
+            <div className="p-3 bg-blue-200 rounded-lg">
+              <LinkIcon className="h-8 w-8 text-blue-700" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="card bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-purple-600">Total Numbers</p>
+              <p className="text-3xl font-bold text-purple-900 mt-1">{phoneNumbers.length}</p>
+            </div>
+            <div className="p-3 bg-purple-200 rounded-lg">
+              <Phone className="h-8 w-8 text-purple-700" />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Vapi Integration Info */}
       <div className="card bg-blue-50 border-blue-200">
         <div className="flex items-start justify-between">
@@ -140,13 +228,9 @@ export default function PhoneNumbers() {
             <div className="flex-1">
               <h3 className="font-semibold text-gray-900 mb-2">Vapi Phone Numbers</h3>
               <p className="text-sm text-gray-600 mb-3">
-                Import phone numbers from your Vapi dashboard or add them manually. Each number can be assigned to one agent.
+                Phone numbers automatically sync from Vapi on page load. Each number can be assigned to one agent.
               </p>
               <div className="flex gap-3">
-                <VapiSyncButton 
-                  type="phone-numbers-from" 
-                  onSyncComplete={() => loadData()}
-                />
                 <a 
                   href="https://vapi.ai/dashboard" 
                   target="_blank" 
@@ -214,12 +298,25 @@ export default function PhoneNumbers() {
                 </div>
               )}
 
+              {phone.vapi_assistant_id && !phone.agent_id && (
+                <div className="mb-3 p-2 bg-blue-50 rounded border border-blue-200">
+                  <p className="text-xs text-blue-600 font-medium mb-1">Vapi Assignment</p>
+                  <p className="text-sm text-gray-900">{getVapiAssistantName(phone.vapi_assistant_id)}</p>
+                </div>
+              )}
+
               <div className="text-sm text-gray-600 mb-4">
                 <p>Country: {phone.country_code || 'N/A'}</p>
                 {phone.vapi_phone_id && (
                   <p className="text-xs text-blue-600 mt-1 flex items-center">
                     <CheckCircle className="h-3 w-3 mr-1" />
                     Synced with Vapi
+                  </p>
+                )}
+                {phone.vapi_assistant_id && (
+                  <p className="text-xs text-purple-600 mt-1 flex items-center">
+                    <LinkIcon className="h-3 w-3 mr-1" />
+                    Linked to Vapi Assistant
                   </p>
                 )}
                 {phone.twilio_sid && (

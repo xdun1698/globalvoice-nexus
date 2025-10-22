@@ -14,7 +14,7 @@ npm run build
 if [ $? -eq 0 ]; then
     echo ""
     echo "🌐 Deploying to Netlify..."
-    netlify deploy --prod --dir=dist
+    netlify deploy --prod --dir=dist --site=globalvoice-nexus
     
     if [ $? -eq 0 ]; then
         echo ""
