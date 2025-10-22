@@ -1,8 +1,12 @@
+import { useState, useMemo } from 'react';
 import { Phone, PhoneIncoming, PhoneOutgoing, Search, AlertCircle } from 'lucide-react';
 
 export default function Calls() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [directionFilter, setDirectionFilter] = useState('all');
+
   // Mock test data for demonstration
-  const calls = [
+  const allCalls = [
     { id: 1, time: '2 min ago', direction: 'inbound', phone: '+1 (817) 541-7385', language: 'English', duration: '4:23', status: 'completed', agent: 'Will - Collections' },
     { id: 2, time: '15 min ago', direction: 'outbound', phone: '+1 (555) 234-5678', language: 'English', duration: '6:45', status: 'completed', agent: 'Customer Support' },
     { id: 3, time: '32 min ago', direction: 'inbound', phone: '+34 612 345 678', language: 'Spanish', duration: '3:12', status: 'completed', agent: 'Sales Agent' },
@@ -19,6 +23,22 @@ export default function Calls() {
     { id: 14, time: '8 hours ago', direction: 'inbound', phone: '+91 98765 43210', language: 'Hindi', duration: '5:52', status: 'completed', agent: 'Sales Agent' },
     { id: 15, time: '9 hours ago', direction: 'inbound', phone: '+1 (555) 111-2222', language: 'English', duration: '4:15', status: 'completed', agent: 'Will - Collections' },
   ];
+
+  // Filter calls based on search and direction
+  const filteredCalls = useMemo(() => {
+    return allCalls.filter(call => {
+      // Direction filter
+      const matchesDirection = directionFilter === 'all' || call.direction === directionFilter;
+      
+      // Search filter
+      const matchesSearch = searchQuery === '' || 
+        call.phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        call.agent.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        call.language.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      return matchesDirection && matchesSearch;
+    });
+  }, [searchQuery, directionFilter]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -44,13 +64,28 @@ export default function Calls() {
         <div className="flex items-center gap-4 mb-6">
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input type="text" placeholder="Search calls..." className="input pl-10" />
+            <input 
+              type="text" 
+              placeholder="Search by phone, agent, or language..." 
+              className="input pl-10" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-          <select className="input w-48">
-            <option>All Directions</option>
-            <option>Inbound</option>
-            <option>Outbound</option>
+          <select 
+            className="input w-48"
+            value={directionFilter}
+            onChange={(e) => setDirectionFilter(e.target.value)}
+          >
+            <option value="all">All Directions</option>
+            <option value="inbound">Inbound</option>
+            <option value="outbound">Outbound</option>
           </select>
+        </div>
+
+        {/* Results count */}
+        <div className="mb-4 text-sm text-gray-600">
+          Showing <span className="font-semibold text-gray-900">{filteredCalls.length}</span> of <span className="font-semibold text-gray-900">{allCalls.length}</span> calls
         </div>
 
         <div className="overflow-x-auto">
@@ -67,8 +102,9 @@ export default function Calls() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {calls.map(call => (
-                <tr key={call.id} className="hover:bg-gray-50 cursor-pointer">
+              {filteredCalls.length > 0 ? (
+                filteredCalls.map(call => (
+                  <tr key={call.id} className="hover:bg-gray-50 cursor-pointer">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{call.time}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -88,7 +124,18 @@ export default function Calls() {
                     <span className="badge badge-success">{call.status}</span>
                   </td>
                 </tr>
-              ))}
+              ))
+              ) : (
+                <tr>
+                  <td colSpan="7" className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center justify-center text-gray-500">
+                      <Phone className="h-12 w-12 mb-3 text-gray-400" />
+                      <p className="text-lg font-medium text-gray-900">No calls found</p>
+                      <p className="text-sm mt-1">Try adjusting your search or filter criteria</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
