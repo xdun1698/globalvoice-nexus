@@ -9,7 +9,7 @@ import AuthLayout from './layouts/AuthLayout';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import Dashboard from './pages/Dashboard';
-import Agents from './pages/Agents';
+import Agents from './pages/AgentsSimplified';
 import AgentBuilder from './pages/AgentBuilder';
 import Calls from './pages/Calls';
 import CallDetails from './pages/CallDetails';

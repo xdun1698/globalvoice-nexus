@@ -321,4 +321,54 @@ router.get('/voices/elevenlabs', async (req, res) => {
   }
 });
 
+// Test call endpoint - Make a test call to verify agent
+router.post('/:id/test-call', async (req, res) => {
+  try {
+    const { phoneNumber } = req.body;
+    
+    if (!phoneNumber) {
+      return res.status(400).json({ error: 'Phone number is required' });
+    }
+
+    const db = getDatabase();
+    const agent = await db('agents')
+      .where({ id: req.params.id, user_id: req.user.id })
+      .first();
+
+    if (!agent) {
+      return res.status(404).json({ error: 'Agent not found' });
+    }
+
+    // Check if agent has vapi_assistant_id
+    if (!agent.vapi_assistant_id) {
+      return res.status(400).json({ 
+        error: 'Agent not synced with Vapi. Please wait a moment and try again.' 
+      });
+    }
+
+    // Make outbound call via Vapi
+    logger.info(`Making test call for agent ${agent.id} to ${phoneNumber}`);
+    
+    const callResult = await vapiService.makeOutboundCall({
+      assistantId: agent.vapi_assistant_id,
+      phoneNumber: phoneNumber,
+      name: `Test call for ${agent.name}`
+    });
+
+    logger.info('Test call initiated:', callResult);
+
+    res.json({ 
+      success: true,
+      message: 'Test call initiated successfully',
+      callId: callResult.id
+    });
+  } catch (error) {
+    logger.error('Error making test call:', error);
+    res.status(500).json({ 
+      error: 'Failed to initiate test call',
+      message: error.message 
+    });
+  }
+});
+
 module.exports = router;

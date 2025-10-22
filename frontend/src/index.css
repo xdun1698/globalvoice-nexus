@@ -35,7 +35,7 @@
   }
 
   .btn-danger {
-    @apply bg-danger-600 text-white hover:bg-danger-700 focus:ring-danger-500;
+    @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
   }
 
   .card {
