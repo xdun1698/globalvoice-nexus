@@ -4,8 +4,10 @@ import {
   MessageSquare, FileText, Webhook, Settings
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 export default function Integrations() {
+  const navigate = useNavigate();
   // Handle CRM connection
   const handleConnectCRM = (crmName) => {
     toast.success(`${crmName} integration coming soon!`, {
@@ -42,11 +44,7 @@ Thank you!`);
 
   // Handle API documentation
   const handleViewDocs = () => {
-    toast.info('API documentation coming soon!', {
-      icon: '📚',
-      duration: 3000
-    });
-    // Future: window.open('/api-docs', '_blank');
+    navigate('/api-docs');
   };
   // Top-rated CRM integrations
   const crmIntegrations = [

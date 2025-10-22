@@ -16,6 +16,7 @@ import CallDetails from './pages/CallDetails';
 import Contacts from './pages/Contacts';
 import Analytics from './pages/Analytics';
 import Integrations from './pages/Integrations';
+import ApiDocs from './pages/ApiDocs';
 import Settings from './pages/Settings';
 import PhoneNumbers from './pages/PhoneNumbers';
 import VapiSync from './pages/VapiSync';
@@ -46,6 +47,7 @@ function App() {
         <Route path="/contacts" element={<Contacts />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/integrations" element={<Integrations />} />
+        <Route path="/api-docs" element={<ApiDocs />} />
         <Route path="/phone-numbers" element={<PhoneNumbers />} />
         <Route path="/vapi-sync" element={<VapiSync />} />
         <Route path="/settings" element={<Settings />} />
