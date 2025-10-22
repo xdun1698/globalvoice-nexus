@@ -222,7 +222,7 @@ class VapiService {
 
     try {
       // Get a phone number to call from (first available Vapi phone number)
-      const phoneNumbers = await this.listPhoneNumbers();
+      const phoneNumbers = await this.getPhoneNumbers();
       if (phoneNumbers.length === 0) {
         throw new Error('No phone numbers available in Vapi. Please add a phone number first.');
       }
