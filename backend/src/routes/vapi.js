@@ -2,11 +2,101 @@ const express = require('express');
 const router = express.Router();
 const { getDatabase } = require('../config/database');
 const logger = require('../utils/logger');
+const vapiService = require('../services/vapi');
+const { authenticate } = require('../middleware/auth');
 
 /**
  * Vapi.ai Webhook Handler
  * Receives call events from Vapi and logs them to the database
  */
+
+// Initiate outbound call via Vapi
+router.post('/call/outbound', authenticate, async (req, res) => {
+  try {
+    const { phoneNumber, agentId, customerData = {} } = req.body;
+
+    if (!phoneNumber || !agentId) {
+      return res.status(400).json({ 
+        error: 'Phone number and agent ID are required' 
+      });
+    }
+
+    // Get agent details to find Vapi assistant ID
+    const db = getDatabase();
+    const agent = await db('agents')
+      .where({ id: agentId, user_id: req.user.id })
+      .first();
+
+    if (!agent) {
+      return res.status(404).json({ error: 'Agent not found' });
+    }
+
+    if (!agent.vapi_assistant_id) {
+      return res.status(400).json({ 
+        error: 'Agent not synced with Vapi. Please sync the agent first.' 
+      });
+    }
+
+    // Check if user has any Vapi phone numbers
+    const phoneNumbers = await db('phone_numbers')
+      .where({ user_id: req.user.id, vapi_phone_id: 'not null' })
+      .whereNotNull('vapi_phone_id');
+
+    if (phoneNumbers.length === 0) {
+      return res.status(400).json({ 
+        error: 'No Vapi phone numbers available. Please sync phone numbers from Vapi first.' 
+      });
+    }
+
+    logger.info(`Initiating Vapi outbound call: ${phoneNumber} using agent ${agent.name}`);
+
+    // Make the call via Vapi
+    const callResult = await vapiService.makeCall(
+      agent.vapi_assistant_id,
+      phoneNumber,
+      customerData
+    );
+
+    // Create local call record
+    await db('calls').insert({
+      id: callResult.id,
+      agent_id: agentId,
+      user_id: req.user.id,
+      phone_number: phoneNumber,
+      direction: 'outbound',
+      status: callResult.status || 'initiated',
+      twilio_sid: `vapi_${callResult.id}`,
+      context: JSON.stringify(customerData),
+      created_at: new Date()
+    });
+
+    logger.info(`Vapi outbound call initiated: ${callResult.id}`);
+
+    res.status(201).json({
+      callId: callResult.id,
+      status: callResult.status || 'initiated',
+      message: 'Call initiated successfully via Vapi'
+    });
+
+  } catch (error) {
+    logger.error('Error initiating Vapi outbound call:', error);
+    
+    // Return user-friendly error message
+    let errorMessage = 'Failed to initiate call';
+    if (error.message.includes('daily outbound call limit')) {
+      errorMessage = 'Daily outbound call limit reached. Please try again tomorrow or upgrade your Vapi plan.';
+    } else if (error.message.includes('No phone numbers available')) {
+      errorMessage = 'No phone numbers available in Vapi. Please add a phone number in Vapi dashboard.';
+    } else if (error.message.includes('Vapi API error')) {
+      errorMessage = error.message;
+    }
+
+    res.status(500).json({ 
+      error: errorMessage,
+      details: error.message 
+    });
+  }
+});
 
 // Vapi webhook for call events
 router.post('/webhook', async (req, res) => {
