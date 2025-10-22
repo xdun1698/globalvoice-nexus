@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Bot, Edit, Trash2, Power, CheckCircle, RefreshCw } from 'lucide-react';
+import { Plus, Bot, Edit, Trash2, Power, CheckCircle, RefreshCw, Phone } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../lib/axios';
 import VapiSyncButton from '../components/VapiSyncButton';
@@ -8,6 +8,10 @@ import VapiSyncButton from '../components/VapiSyncButton';
 export default function Agents() {
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showCallModal, setShowCallModal] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState(null);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [makingCall, setMakingCall] = useState(false);
 
   useEffect(() => {
     loadAgents();
@@ -34,6 +38,37 @@ export default function Agents() {
       loadAgents();
     } catch (error) {
       toast.error('Failed to delete agent');
+    }
+  };
+
+  const makeCall = async () => {
+    if (!phoneNumber.trim()) {
+      toast.error('Please enter a phone number');
+      return;
+    }
+
+    if (!selectedAgent) {
+      toast.error('No agent selected');
+      return;
+    }
+
+    try {
+      setMakingCall(true);
+      const response = await api.post('/api/vapi/call/outbound', {
+        phoneNumber: phoneNumber.trim(),
+        agentId: selectedAgent.id
+      });
+
+      toast.success(`Call initiated successfully! Call ID: ${response.data.callId}`);
+      setShowCallModal(false);
+      setPhoneNumber('');
+      setSelectedAgent(null);
+    } catch (error) {
+      console.error('Call failed:', error);
+      const errorMessage = error.response?.data?.error || 'Failed to initiate call';
+      toast.error(errorMessage);
+    } finally {
+      setMakingCall(false);
     }
   };
 
@@ -114,6 +149,16 @@ export default function Agents() {
               <div className="flex items-center justify-between pt-4 border-t">
                 <span className="text-sm text-gray-600">Active</span>
                 <div className="flex gap-2">
+                  <button 
+                    onClick={() => {
+                      setSelectedAgent(agent);
+                      setShowCallModal(true);
+                    }}
+                    className="text-green-600 hover:text-green-700"
+                    title="Make outbound call"
+                  >
+                    <Phone className="h-5 w-5" />
+                  </button>
                   <Link to={`/agents/${agent.id}/edit`} className="text-primary-600 hover:text-primary-700">
                     <Edit className="h-5 w-5" />
                   </Link>
@@ -127,6 +172,63 @@ export default function Agents() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Make Call Modal */}
+      {showCallModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Make Outbound Call</h2>
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 mb-3">
+                Agent: <span className="font-medium text-gray-900">{selectedAgent?.name}</span>
+              </p>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Phone Number *
+              </label>
+              <input
+                type="text"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="+1234567890"
+                className="input"
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                Enter the phone number to call (include country code)
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => {
+                  setShowCallModal(false);
+                  setSelectedAgent(null);
+                  setPhoneNumber('');
+                }} 
+                className="btn btn-secondary flex-1"
+                disabled={makingCall}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={makeCall} 
+                disabled={makingCall}
+                className="btn btn-primary flex-1 flex items-center justify-center"
+              >
+                {makingCall ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Calling...
+                  </>
+                ) : (
+                  <>
+                    <Phone className="h-4 w-4 mr-2" />
+                    Call
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
