@@ -265,83 +265,129 @@ export default function AgentBuilder() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Voice Provider & Type
+                <Mic className="inline w-4 h-4 mr-1" />
+                Voice Selection (International Test Voices)
               </label>
-              <select {...register('elevenlabs_voice')} className="input">
-                <optgroup label="⭐⭐⭐⭐⭐ PREMIUM - Best for Customer-Facing">
-                  {loadingVoices ? (
-                    <option value="">Loading voices...</option>
-                  ) : elevenLabsVoices.length > 0 ? (
-                    elevenLabsVoices
-                      .filter(v => v.rating === 5)
-                      .map(voice => (
-                        <option key={voice.id} value={voice.id}>
-                          {voice.name} ({voice.gender}, {voice.accent}) - {voice.tone}
-                        </option>
-                      ))
-                  ) : (
-                    <>
-                      <option value="ErXwobaYiN019PkySvjV">Antoni/Will ⭐⭐⭐⭐⭐ (Male, US) - Collections/Sales</option>
-                      <option value="21m00Tcm4TlvDq8ikWAM">Rachel ⭐⭐⭐⭐⭐ (Female, US) - Support</option>
-                      <option value="pNInz6obpgDQGcFmaJgB">Adam ⭐⭐⭐⭐⭐ (Male, US) - Corporate</option>
-                      <option value="EXAVITQu4vr4xnSDxMaL">Bella ⭐⭐⭐⭐⭐ (Female, US) - Hospitality</option>
-                      <option value="TxGEqnHWrfWFTfGW9XjX">Josh ⭐⭐⭐⭐⭐ (Male, US) - Tech/Startups</option>
-                    </>
-                  )}
+              <select {...register('elevenlabs_voice')} className="input" disabled>
+                <optgroup label="🇺🇸 NORTH AMERICA - Premium">
+                  <option value="test_antoni">Antoni (Male, US) - Professional, Clear</option>
+                  <option value="test_rachel">Rachel (Female, US) - Warm, Friendly</option>
+                  <option value="test_adam">Adam (Male, US) - Deep, Authoritative</option>
+                  <option value="test_bella">Bella (Female, US) - Soft, Empathetic</option>
+                  <option value="test_josh">Josh (Male, US) - Energetic, Young</option>
+                  <option value="test_domi">Domi (Female, US) - Confident, Leadership</option>
+                  <option value="test_grace">Grace (Female, US Southern) - Warm, Hospitality</option>
                 </optgroup>
-                <optgroup label="⭐⭐⭐⭐ EXCELLENT - Professional Quality">
-                  {elevenLabsVoices.length > 0 ? (
-                    elevenLabsVoices
-                      .filter(v => v.rating === 4)
-                      .map(voice => (
-                        <option key={voice.id} value={voice.id}>
-                          {voice.name} ({voice.gender}, {voice.accent}) - {voice.tone}
-                        </option>
-                      ))
-                  ) : (
-                    <>
-                      <option value="AZnzlk1XvdvUeBnXmlld">Domi ⭐⭐⭐⭐ (Female, US) - Sales/Leadership</option>
-                      <option value="yoZ06aMxZJJ28mfd3POQ">Sam ⭐⭐⭐⭐ (Male, US) - Storytelling</option>
-                      <option value="MF3mGyEYCl7XYWbV9V6O">Elli ⭐⭐⭐⭐ (Female, US) - Empathetic</option>
-                      <option value="VR6AewLTigWG4xSOukaG">Arnold ⭐⭐⭐⭐ (Male, US) - Technical</option>
-                      <option value="pFZP5JQG7iQjIQuC4Bku">Lily ⭐⭐⭐⭐ (Female, UK) - British</option>
-                      <option value="oWAxZDx7w5VEj9dCyTzz">Grace ⭐⭐⭐⭐ (Female, US Southern) - Hospitality</option>
-                      <option value="N2lVS1w4EtoT3dr4eOWO">Tom ⭐⭐⭐⭐ (Male, US) - Collections</option>
-                    </>
-                  )}
+                
+                <optgroup label="🇬🇧 UNITED KINGDOM - British English">
+                  <option value="test_lily">Lily (Female, UK) - Elegant, Professional</option>
+                  <option value="test_daniel">Daniel (Male, UK) - Refined, Corporate</option>
+                  <option value="test_charlotte">Charlotte (Female, UK) - Sophisticated, Clear</option>
+                  <option value="test_george">George (Male, UK) - Distinguished, Formal</option>
+                  <option value="test_alice">Alice (Female, UK) - Friendly, Approachable</option>
                 </optgroup>
-                <optgroup label="⭐⭐⭐ GOOD - Solid Performance">
-                  {elevenLabsVoices.length > 0 ? (
-                    elevenLabsVoices
-                      .filter(v => v.rating === 3)
-                      .map(voice => (
-                        <option key={voice.id} value={voice.id}>
-                          {voice.name} ({voice.gender}, {voice.accent})
-                        </option>
-                      ))
-                  ) : (
-                    <>
-                      <option value="onwK4e9ZLuTAKqWW03F9">Daniel (Male, UK)</option>
-                      <option value="XrExE9yKIg1WjnnlVkGX">Matilda (Female, US)</option>
-                      <option value="ZQe5CZNOzWyzPSCn5a3c">James (Male, Australian)</option>
-                      <option value="LcfcDJNUP1GQjkzn1xUU">Emily (Female, US)</option>
-                      <option value="GBv7mTt0atIp3Br8iCZE">Thomas (Male, US)</option>
-                    </>
-                  )}
+                
+                <optgroup label="🇦🇺 AUSTRALIA - Australian English">
+                  <option value="test_james">James (Male, Australian) - Casual, Friendly</option>
+                  <option value="test_nicole">Nicole (Female, Australian) - Bright, Energetic</option>
+                  <option value="test_jack">Jack (Male, Australian) - Laid-back, Approachable</option>
+                  <option value="test_emma">Emma (Female, Australian) - Warm, Professional</option>
                 </optgroup>
-                <optgroup label="🔊 AWS POLLY (Standard - Basic Voices)">
-                  <option value="Polly.Joanna">Joanna (Female, US)</option>
-                  <option value="Polly.Matthew">Matthew (Male, US)</option>
-                  <option value="Polly.Kendra">Kendra (Female, US)</option>
-                  <option value="Polly.Joey">Joey (Male, US)</option>
-                  <option value="Polly.Amy">Amy (Female, UK)</option>
-                  <option value="Polly.Brian">Brian (Male, UK)</option>
+                
+                <optgroup label="🇮🇳 INDIA - Indian English">
+                  <option value="test_priya">Priya (Female, Indian) - Clear, Professional</option>
+                  <option value="test_raj">Raj (Male, Indian) - Articulate, Technical</option>
+                  <option value="test_ananya">Ananya (Female, Indian) - Friendly, Support</option>
+                  <option value="test_arjun">Arjun (Male, Indian) - Confident, Sales</option>
+                </optgroup>
+                
+                <optgroup label="🇪🇸 SPAIN - Spanish">
+                  <option value="test_carmen">Carmen (Female, Spanish) - Warm, Expressive</option>
+                  <option value="test_diego">Diego (Male, Spanish) - Professional, Clear</option>
+                  <option value="test_lucia">Lucía (Female, Spanish) - Friendly, Energetic</option>
+                </optgroup>
+                
+                <optgroup label="🇲🇽 MEXICO - Latin American Spanish">
+                  <option value="test_maria">María (Female, Mexican) - Warm, Friendly</option>
+                  <option value="test_carlos">Carlos (Male, Mexican) - Professional, Clear</option>
+                  <option value="test_sofia">Sofía (Female, Mexican) - Empathetic, Support</option>
+                </optgroup>
+                
+                <optgroup label="🇫🇷 FRANCE - French">
+                  <option value="test_amelie">Amélie (Female, French) - Elegant, Sophisticated</option>
+                  <option value="test_pierre">Pierre (Male, French) - Professional, Refined</option>
+                  <option value="test_claire">Claire (Female, French) - Warm, Friendly</option>
+                </optgroup>
+                
+                <optgroup label="🇩🇪 GERMANY - German">
+                  <option value="test_anna">Anna (Female, German) - Clear, Professional</option>
+                  <option value="test_hans">Hans (Male, German) - Authoritative, Technical</option>
+                  <option value="test_lena">Lena (Female, German) - Friendly, Approachable</option>
+                </optgroup>
+                
+                <optgroup label="🇮🇹 ITALY - Italian">
+                  <option value="test_giulia">Giulia (Female, Italian) - Warm, Expressive</option>
+                  <option value="test_marco">Marco (Male, Italian) - Confident, Professional</option>
+                  <option value="test_francesca">Francesca (Female, Italian) - Elegant, Friendly</option>
+                </optgroup>
+                
+                <optgroup label="🇧🇷 BRAZIL - Portuguese">
+                  <option value="test_isabela">Isabela (Female, Brazilian) - Warm, Energetic</option>
+                  <option value="test_gabriel">Gabriel (Male, Brazilian) - Friendly, Professional</option>
+                  <option value="test_camila">Camila (Female, Brazilian) - Bright, Approachable</option>
+                </optgroup>
+                
+                <optgroup label="🇯🇵 JAPAN - Japanese">
+                  <option value="test_yuki">Yuki (Female, Japanese) - Polite, Professional</option>
+                  <option value="test_takeshi">Takeshi (Male, Japanese) - Formal, Respectful</option>
+                  <option value="test_sakura">Sakura (Female, Japanese) - Gentle, Friendly</option>
+                </optgroup>
+                
+                <optgroup label="🇰🇷 SOUTH KOREA - Korean">
+                  <option value="test_jisoo">Jisoo (Female, Korean) - Professional, Clear</option>
+                  <option value="test_minho">Minho (Male, Korean) - Confident, Technical</option>
+                  <option value="test_soyeon">Soyeon (Female, Korean) - Friendly, Support</option>
+                </optgroup>
+                
+                <optgroup label="🇨🇳 CHINA - Mandarin Chinese">
+                  <option value="test_mei">Mei (Female, Mandarin) - Professional, Clear</option>
+                  <option value="test_wei">Wei (Male, Mandarin) - Authoritative, Formal</option>
+                  <option value="test_ling">Ling (Female, Mandarin) - Warm, Friendly</option>
+                </optgroup>
+                
+                <optgroup label="🇦🇪 UAE - Arabic">
+                  <option value="test_fatima">Fatima (Female, Arabic) - Professional, Elegant</option>
+                  <option value="test_omar">Omar (Male, Arabic) - Confident, Clear</option>
+                  <option value="test_layla">Layla (Female, Arabic) - Warm, Friendly</option>
+                </optgroup>
+                
+                <optgroup label="🇷🇺 RUSSIA - Russian">
+                  <option value="test_natasha">Natasha (Female, Russian) - Professional, Clear</option>
+                  <option value="test_dmitri">Dmitri (Male, Russian) - Deep, Authoritative</option>
+                  <option value="test_olga">Olga (Female, Russian) - Warm, Approachable</option>
+                </optgroup>
+                
+                <optgroup label="🇿🇦 SOUTH AFRICA - English">
+                  <option value="test_zara">Zara (Female, South African) - Friendly, Clear</option>
+                  <option value="test_liam">Liam (Male, South African) - Professional, Warm</option>
+                </optgroup>
+                
+                <optgroup label="🇳🇱 NETHERLANDS - Dutch">
+                  <option value="test_eva">Eva (Female, Dutch) - Clear, Professional</option>
+                  <option value="test_lars">Lars (Male, Dutch) - Friendly, Direct</option>
+                </optgroup>
+                
+                <optgroup label="🇸🇪 SWEDEN - Swedish">
+                  <option value="test_astrid">Astrid (Female, Swedish) - Professional, Clear</option>
+                  <option value="test_erik">Erik (Male, Swedish) - Calm, Technical</option>
                 </optgroup>
               </select>
-              <p className="mt-1 text-sm text-gray-500">
-                <span className="font-semibold">⭐ Rating:</span> 5=Premium, 4=Excellent, 3=Good | 
-                <span className="font-semibold"> Will/Antoni</span> = Best for collections
-              </p>
+              <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <p className="text-sm text-amber-800">
+                  <span className="font-semibold">🌍 International Test Voices</span> - These are placeholder voices for demonstration. 
+                  Voice selection is currently disabled. Contact support to enable premium international voices for your account.
+                </p>
+              </div>
             </div>
 
             <div className="md:col-span-2">
